@@ -1,0 +1,16 @@
+{
+    "title": "Ungelesen",
+    "no-unread-topics": "Es gibt keine ungelesenen Themen.",
+    "load-more": "Mehr laden",
+    "mark-as-read": "Als gelesen markieren",
+    "mark-as-unread": "Mark as Unread",
+    "selected": "Ausgewählt",
+    "all": "Alle",
+    "all-categories": "Alle Kategorien",
+    "topics-marked-as-read.success": "Themen als gelesen markiert!",
+    "all-topics": "Alle Themen",
+    "new-topics": "Neue Themen",
+    "watched-topics": "Beobachtete Themen",
+    "unreplied-topics": "Unbeantwortete Themen",
+    "multiple-categories-selected": "Mehrere ausgewählt"
+}
