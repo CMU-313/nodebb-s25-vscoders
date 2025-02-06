@@ -192,7 +192,7 @@ module.exports = function (Posts) {
 
 		// If uid = admin, then add a fild that said admin_endorsed.
 		if (uid === 1 && type === 'upvote' && !unvote) {
-			let postContent = await Posts.getPostField(pid, 'content') || ''; // 确保 postContent 不为空
+			let postContent = await Posts.getPostField(pid, 'content') || '';
 			if (!postContent.includes("✅ Admin endorsed this post")) {
 				postContent += '\n\n✅ Admin endorsed this post';
 
@@ -204,7 +204,7 @@ module.exports = function (Posts) {
 				});
 			}
 		} else if (uid === 1 && unvote) {
-			let postContent = await Posts.getPostField(pid, 'content') || ''; // 确保 postContent 不为空
+			let postContent = await Posts.getPostField(pid, 'content') || '';
 			if (postContent.includes("✅ Admin endorsed this post")) {
 				postContent = postContent.replace(/\n\n✅ Admin endorsed this post/g, '');
 
