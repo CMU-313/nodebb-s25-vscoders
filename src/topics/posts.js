@@ -11,6 +11,7 @@ const posts = require('../posts');
 const meta = require('../meta');
 const plugins = require('../plugins');
 const utils = require('../utils');
+const crypto = require('crypto');
 
 const backlinkRegex = new RegExp(`(?:${nconf.get('url').replace('/', '\\/')}|\b|\\s)\\/topic\\/(\\d+)(?:\\/\\w+)?`, 'g');
 
@@ -103,6 +104,10 @@ module.exports = function (Topics) {
 		}
 	}
 
+	function generateRandomUsername() {
+		return crypto.randomBytes(6).toString('hex'); // Generates a random string of 12 hex characters
+	}
+
 	Topics.addPostData = async function (postData, uid) {
 		console.log('add post data')
 		if (!Array.isArray(postData) || !postData.length) {
@@ -132,6 +137,7 @@ module.exports = function (Topics) {
 
 		postData.forEach((postObj, i) => {
 			if (postObj) {
+				console.log("changed the username")
 				postObj.user = postObj.uid ? userData[postObj.uid] : { ...userData[postObj.uid] };
 				postObj.editor = postObj.editor ? editors[postObj.editor] : null;
 				postObj.bookmarked = bookmarks[i];
@@ -142,10 +148,15 @@ module.exports = function (Topics) {
 				postObj.selfPost = parseInt(uid, 10) > 0 && parseInt(uid, 10) === postObj.uid;
 
 				// Username override for guests, if enabled
-				if (meta.config.allowGuestHandles && postObj.uid === 0 && postObj.handle) {
-					postObj.user.username = validator.escape(String(postObj.handle));
-					postObj.user.displayname = postObj.user.username;
-				}
+				// if (meta.config.allowGuestHandles && postObj.uid === 0 && postObj.handle) {
+				// 	postObj.user.username = validator.escape(String(postObj.handle));
+				// 	postObj.user.displayname = postObj.user.username;
+				// }
+
+				postObj.user.username = generateRandomUsername();
+				postObj.user.displayname = postObj.user.username;
+
+
 			}
 		});
 
