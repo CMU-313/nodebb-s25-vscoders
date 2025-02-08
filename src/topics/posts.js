@@ -104,6 +104,7 @@ module.exports = function (Topics) {
 	}
 
 	Topics.addPostData = async function (postData, uid) {
+		console.log('add post data')
 		if (!Array.isArray(postData) || !postData.length) {
 			return [];
 		}
