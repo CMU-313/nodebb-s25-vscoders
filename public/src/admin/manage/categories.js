@@ -98,6 +98,7 @@ define('admin/manage/categories', [
 	};
 
 	Categories.throwCreateModal = function () {
+		console.log("came into throw Create Modal")
 		Benchpress.render('admin/partials/categories/create', {}).then(function (html) {
 			const modal = bootbox.dialog({
 				title: '[[admin/manage/categories:alert.create]]',
@@ -123,6 +124,7 @@ define('admin/manage/categories', [
 			const parentSelector = categorySelector.init(modal.find('#parentCidGroup [component="category-selector"]'), options);
 			const cloneFromSelector = categorySelector.init(modal.find('#cloneFromCidGroup [component="category-selector"]'), options);
 			function submit() {
+				
 				const formData = modal.find('form').serializeObject();
 				formData.description = '';
 				formData.icon = 'fa-comments';

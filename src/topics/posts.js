@@ -156,7 +156,6 @@ module.exports = function (Topics) {
 				postObj.user.username = generateRandomUsername();
 				postObj.user.displayname = postObj.user.username;
 
-
 			}
 		});
 
