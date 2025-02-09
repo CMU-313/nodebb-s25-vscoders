@@ -8,6 +8,7 @@ const topics = require('../topics');
 const plugins = require('../plugins');
 const privileges = require('../privileges');
 const translator = require('../translator');
+const pubsub = require('../pubsub');
 
 module.exports = function (Posts) {
 	const votesInProgress = {};
@@ -176,7 +177,7 @@ module.exports = function (Posts) {
 			throw new Error('[[error:not-logged-in]]');
 		}
 		const now = Date.now();
-
+		
 		if (type === 'upvote' && !unvote) {
 			await db.sortedSetAdd(`uid:${uid}:upvote`, now, pid);
 		} else {
@@ -189,7 +190,38 @@ module.exports = function (Posts) {
 			await db.sortedSetAdd(`uid:${uid}:downvote`, now, pid);
 		}
 
-		const postData = await Posts.getPostFields(pid, ['pid', 'uid', 'tid']);
+		// If uid = admin, then add a fild that said admin_endorsed.
+		if (uid === 1 && type === 'upvote' && !unvote) {
+			let postContent = await Posts.getPostField(pid, 'content') || '';
+			if (!postContent.includes("✅ Admin endorsed this post")) {
+				postContent += '\n\n✅ Admin endorsed this post';
+
+				console.log(`[DEBUG] Editing post ${pid} with admin endorsement.`);
+				await Posts.edit({
+					pid: pid,
+					content: postContent,
+					uid: 1,
+				});
+			}
+		} else if (uid === 1 && unvote) {
+			let postContent = await Posts.getPostField(pid, 'content') || '';
+			if (postContent.includes("✅ Admin endorsed this post")) {
+				postContent = postContent.replace(/\n\n✅ Admin endorsed this post/g, '');
+
+				console.log(`[DEBUG] Removing admin endorsement from post ${pid}.`);
+				await Posts.edit({
+					pid: pid,
+					content: postContent,
+					uid: 1,
+				});
+			}
+		}
+
+		
+		
+		
+
+		const postData = await Posts.getPostFields(pid, ['pid', 'uid', 'tid', 'content']);
 		const newReputation = await user.incrementUserReputationBy(postData.uid, type === 'upvote' ? 1 : -1);
 
 		await adjustPostVotes(postData, uid, type, unvote);
