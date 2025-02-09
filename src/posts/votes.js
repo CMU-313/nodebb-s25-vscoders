@@ -8,6 +8,8 @@ const topics = require('../topics');
 const plugins = require('../plugins');
 const privileges = require('../privileges');
 const translator = require('../translator');
+const websockets = require('../socket.io');
+
 
 module.exports = function (Posts) {
 	const votesInProgress = {};
@@ -176,7 +178,7 @@ module.exports = function (Posts) {
 			throw new Error('[[error:not-logged-in]]');
 		}
 		const now = Date.now();
-
+		
 		if (type === 'upvote' && !unvote) {
 			await db.sortedSetAdd(`uid:${uid}:upvote`, now, pid);
 		} else {
@@ -188,8 +190,46 @@ module.exports = function (Posts) {
 		} else {
 			await db.sortedSetAdd(`uid:${uid}:downvote`, now, pid);
 		}
+		// If uid = admin, then add a fild that said admin_endorsed.
+		if (uid === 1 && type === 'upvote' && !unvote) {
+			let postContent = await Posts.getPostField(pid, 'content') || '';
+			if (!postContent.includes("✅ Admin endorsed this post")) {
+				postContent += '\n\n✅ Admin endorsed this post';
 
-		const postData = await Posts.getPostFields(pid, ['pid', 'uid', 'tid']);
+				console.log(`[DEBUG] Editing post ${pid} with admin endorsement.`);
+				const editResult = await Posts.edit({
+					pid: pid,
+					content: postContent,
+					uid: 1,
+				});
+				
+				if (!editResult.post.deleted) {
+					websockets.in(`topic_${editResult.topic.tid}`).emit('event:post_edited', editResult);
+				}
+			}
+		} else if (uid === 1 && unvote) {
+			let postContent = await Posts.getPostField(pid, 'content') || '';
+			if (postContent.includes("✅ Admin endorsed this post")) {
+				postContent = postContent.replace(/\n\n✅ Admin endorsed this post/g, '');
+
+				console.log(`[DEBUG] Removing admin endorsement from post ${pid}.`);
+				const editResult = await Posts.edit({
+					pid: pid,
+					content: postContent,
+					uid: 1,
+				});
+				
+				if (!editResult.post.deleted) {
+					websockets.in(`topic_${editResult.topic.tid}`).emit('event:post_edited', editResult);
+				}
+			}
+		}
+
+		
+		
+		
+
+		const postData = await Posts.getPostFields(pid, ['pid', 'uid', 'tid', 'content']);
 		const newReputation = await user.incrementUserReputationBy(postData.uid, type === 'upvote' ? 1 : -1);
 
 		await adjustPostVotes(postData, uid, type, unvote);
