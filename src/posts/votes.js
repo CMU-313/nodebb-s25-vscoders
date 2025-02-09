@@ -196,8 +196,7 @@ module.exports = function (Posts) {
 			if (!postContent.includes("✅ Admin endorsed this post")) {
 				postContent += '\n\n✅ Admin endorsed this post';
 
-				console.log(`[DEBUG] Editing post ${pid} with admin endorsement.`);
-				const editResult = await Posts.edit({
+				await Posts.edit({
 					pid: pid,
 					content: postContent,
 					uid: 1,
@@ -212,8 +211,7 @@ module.exports = function (Posts) {
 			if (postContent.includes("✅ Admin endorsed this post")) {
 				postContent = postContent.replace(/\n\n✅ Admin endorsed this post/g, '');
 
-				console.log(`[DEBUG] Removing admin endorsement from post ${pid}.`);
-				const editResult = await Posts.edit({
+				await Posts.edit({
 					pid: pid,
 					content: postContent,
 					uid: 1,
@@ -224,10 +222,6 @@ module.exports = function (Posts) {
 				}
 			}
 		}
-
-		
-		
-		
 
 		const postData = await Posts.getPostFields(pid, ['pid', 'uid', 'tid', 'content']);
 		const newReputation = await user.incrementUserReputationBy(postData.uid, type === 'upvote' ? 1 : -1);
