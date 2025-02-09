@@ -190,33 +190,35 @@ module.exports = function (Posts) {
 		} else {
 			await db.sortedSetAdd(`uid:${uid}:downvote`, now, pid);
 		}
-		// If uid = admin, then add a fild that said admin_endorsed.
+		// If uid = admin, then add a tag that said admin endorsed.
 		if (uid === 1 && type === 'upvote' && !unvote) {
 			let postContent = await Posts.getPostField(pid, 'content') || '';
-			if (!postContent.includes("✅ Admin endorsed this post")) {
-				postContent += '\n\n✅ Admin endorsed this post';
+			
+			postContent += '\n\n**✅ Admin endorsed this post**';
+			
+			//console.log(`[DEBUG] Editing post ${pid} with admin endorsement.`);
+			const editResult = await Posts.edit({
+				pid: pid,
+				content: postContent,
+				uid: 1,
+			});
 
-				await Posts.edit({
-					pid: pid,
-					content: postContent,
-					uid: 1,
-				});
-				
-				if (!editResult.post.deleted) {
-					websockets.in(`topic_${editResult.topic.tid}`).emit('event:post_edited', editResult);
-				}
+			if (!editResult.post.deleted) {
+				websockets.in(`topic_${editResult.topic.tid}`).emit('event:post_edited', editResult);
 			}
 		} else if (uid === 1 && unvote) {
 			let postContent = await Posts.getPostField(pid, 'content') || '';
-			if (postContent.includes("✅ Admin endorsed this post")) {
-				postContent = postContent.replace(/\n\n✅ Admin endorsed this post/g, '');
-
-				await Posts.edit({
+			
+			const tag = '\n\n**✅ Admin endorsed this post**';
+			if (postContent.endsWith(tag)) {
+				postContent = postContent.slice(0, -tag.length);
+				//console.log(`[DEBUG] Removing admin endorsement from post ${pid}.`);
+				const editResult = await Posts.edit({
 					pid: pid,
 					content: postContent,
 					uid: 1,
 				});
-				
+
 				if (!editResult.post.deleted) {
 					websockets.in(`topic_${editResult.topic.tid}`).emit('event:post_edited', editResult);
 				}
