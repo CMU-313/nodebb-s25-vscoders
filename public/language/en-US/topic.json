@@ -164,6 +164,7 @@
     "composer.submit": "Submit",
     "composer.additional-options": "Additional Options",
     "composer.post-later": "Post Later",
+    "composer.post-anon": "Post Anonymously",
     "composer.schedule": "Schedule",
     "composer.replying-to": "Replying to %1",
     "composer.new-topic": "New Topic",

@@ -16,6 +16,7 @@ module.exports = function (Posts) {
 		// This is an internal method, consider using Topics.reply instead
 		const { uid } = data;
 		const { tid } = data;
+		const { is_anonymous } = data;
 		const content = data.content.toString();
 		const timestamp = data.timestamp || Date.now();
 		const isMain = data.isMain || false;
@@ -35,6 +36,7 @@ module.exports = function (Posts) {
 			tid: tid,
 			content: content,
 			timestamp: timestamp,
+			is_anonymous: is_anonymous,
 		};
 
 		if (data.toPid) {

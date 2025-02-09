@@ -147,16 +147,17 @@ module.exports = function (Topics) {
 				postObj.replies = replies[i];
 				postObj.selfPost = parseInt(uid, 10) > 0 && parseInt(uid, 10) === postObj.uid;
 
+				const is_anonymous = postObj.isAnonymous;
+
+				if (is_anonymous) {
+					postObj.user.username = generateRandomUsername();
+					postObj.user.displayname = postObj.user.username;
+				}
 				// Username override for guests, if enabled
 				// if (meta.config.allowGuestHandles && postObj.uid === 0 && postObj.handle) {
 				// 	postObj.user.username = validator.escape(String(postObj.handle));
 				// 	postObj.user.displayname = postObj.user.username;
 				// }
-
-				postObj.user.username = generateRandomUsername();
-				postObj.user.displayname = postObj.user.username;
-
-
 			}
 		});
 
