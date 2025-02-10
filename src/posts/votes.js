@@ -178,7 +178,6 @@ module.exports = function (Posts) {
 			throw new Error('[[error:not-logged-in]]');
 		}
 		const now = Date.now();
-		
 		if (type === 'upvote' && !unvote) {
 			await db.sortedSetAdd(`uid:${uid}:upvote`, now, pid);
 		} else {
