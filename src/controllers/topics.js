@@ -22,36 +22,30 @@ const relative_path = nconf.get('relative_path');
 const upload_url = nconf.get('upload_url');
 const validSorts = ['oldest_to_newest', 'newest_to_oldest', 'most_votes'];
 
-topicsController.create = async function (req, res) {
-    const { title, content, cid, tags } = req.body;
+// topicsController.create = async function create(req, res) {
+// 	console.log("came into create function")
+//     try {
+//         const userId = req.user?.uid;
+//         const isAnonymous = req.body.anonymous === 'true'; // Capture anonymous checkbox
 
-    // Check if the anonymous post checkbox is checked
-    const isAnonymous = req.body['anonymous-post'] === 'on';
+// 		console.log("anonymous button was checked")
+//         // Process topic creation with or without user identity
+//         const topicData = {
+//             title: req.body.title,
+//             content: req.body.content,
+//             uid: isAnonymous ? null : userId, // Set UID to null for anonymous posts
+//         };
 
-    // Prepare the topic data
-    const topicData = {
-        title: title,
-        content: content,
-        cid: cid,
-        tags: tags,
-        uid: req.uid, // Default to the current user's ID
-        timestamp: Date.now(),
-        is_anonymous: isAnonymous ? 1 : 0, // Add the anonymous flag
-    };
-
-    // If anonymous post is enabled, modify the user data
-    if (isAnonymous) {
-        topicData.username = 'Anonymous'; // Set the username to "Anonymous"
-    }
-
-    // Create the topic
-    const tid = await topics.create(topicData);
-
-    // Redirect or respond with the new topic ID
-    res.redirect(`/topic/${tid}`);
-};
+//         const topicId = await topics.create(topicData);
+//         res.json({ tid: topicId });
+//     } catch (err) {
+//         res.status(500).json({ error: err.message });
+//     }
+// }
 
 topicsController.get = async function getTopic(req, res, next) {
+	console.log("came into topics.js from topics controller")
+	
 	const tid = req.params.topic_id;
 	if (
 		(req.params.post_index && !utils.isNumber(req.params.post_index) && req.params.post_index !== 'unread') ||
@@ -63,13 +57,6 @@ topicsController.get = async function getTopic(req, res, next) {
 	const topicData = await topics.getTopicData(tid);
 	if (!topicData) {
 		return next();
-	}
-
-	// Check if the topic is anonymous
-	if (topicData.is_anonymous) {
-		topicData.username = 'Anonymous'; // Override the username
-		topicData.userslug = 'anonymous'; // Override the userslug
-		topicData.picture = ''; // Remove the user's profile picture
 	}
 
 	const [

@@ -20,5 +20,17 @@
 				</tbody>
 			</table>
 		</div>
+
+		<!-- public/templates/topic.tpl -->
+		<div class="post">
+			<div class="post-header">
+				<span class="username">
+					{{{ if post.anonymous }}}Anonymous{{{ else }}}{post.user.username}{{{ end }}}
+				</span>
+			</div>
+			<div class="post-content">
+				{post.content}
+			</div>
+		</div>
 	</div>
 </div>

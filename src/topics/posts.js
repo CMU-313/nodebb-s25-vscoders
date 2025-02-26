@@ -108,7 +108,7 @@ module.exports = function (Topics) {
 		return crypto.randomBytes(6).toString('hex'); // Generates a random string of 12 hex characters
 	}
 
-	Topics.addPostData = async function (postData, uid) {
+	Topics.addPostData = async function (postData, uid, isAnonymous) {
 		console.log('add post data')
 		if (!Array.isArray(postData) || !postData.length) {
 			return [];
@@ -137,8 +137,16 @@ module.exports = function (Topics) {
 
 		postData.forEach((postObj, i) => {
 			if (postObj) {
-				console.log("changed the username")
-				postObj.user = postObj.uid ? userData[postObj.uid] : { ...userData[postObj.uid] };
+
+				// Check if post is marked as anonymous
+				if (isAnonymous) {
+					console.log("Post is anonymous - generating random username");
+					postObj.user = { username: generateRandomUsername(), displayname: generateRandomUsername() };
+				} else {
+					console.log("Post is NOT anonymous - using real username");
+					postObj.user = postObj.uid ? userData[postObj.uid] : { ...userData[postObj.uid] };
+				}
+
 				postObj.editor = postObj.editor ? editors[postObj.editor] : null;
 				postObj.bookmarked = bookmarks[i];
 				postObj.upvoted = voteData.upvotes[i];
@@ -151,10 +159,10 @@ module.exports = function (Topics) {
 				// if (meta.config.allowGuestHandles && postObj.uid === 0 && postObj.handle) {
 				// 	postObj.user.username = validator.escape(String(postObj.handle));
 				// 	postObj.user.displayname = postObj.user.username;
-				// }
+				// // }
 
-				postObj.user.username = generateRandomUsername();
-				postObj.user.displayname = postObj.user.username;
+				// postObj.user.username = generateRandomUsername();
+				// postObj.user.displayname = postObj.user.username;
 
 			}
 		});
