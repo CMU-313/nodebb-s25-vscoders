@@ -33,13 +33,13 @@
 
 <li {{{ if !private }}}hidden{{{ end }}}>
 	<a component="topic/make-private" href="#" class="dropdown-item rounded-1 d-flex align-items-center gap-2">
-		<i class="fa fa-fw fa-eye-slash text-secondary"></i> [[topic:thread-tools.makePrivate]]
+		<i class="fa fa-fw fa-eye-slash text-secondary"></i> Make Private
 	</a>
 </li>
 
 <li {{{ if private }}}hidden{{{ end }}}>
 	<a component="topic/make-public" href="#" class="dropdown-item rounded-1 d-flex align-items-center gap-2">
-		<i class="fa fa-fw fa-eye text-secondary"></i> [[topic:thread-tools.makePublic]]
+		<i class="fa fa-fw fa-eye text-secondary"></i> Make Public
 	</a>
 </li>
 
