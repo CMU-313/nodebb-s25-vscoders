@@ -8,6 +8,7 @@
 			<textarea component="chat/input" placeholder="[[modules:chat.placeholder.mobile]]" class="bg-transparent text-body form-control chat-input mousetrap rounded-0 border-0 shadow-none px-1 py-0" style="min-height: 1.5rem;height:0;max-height:30vh;resize:none;"></textarea>
 		</div>
 		<div class="d-flex gap-1">
+			<button class="btn-ghost-sm px-2" id="anonymous-button" type="button" title="[[modules:chat.anonymous]]" data-bs-toggle="tooltip"><i class="fa fa-fw fa-user-secret"></i></button>
 			{{{ each composerActions }}}
 			<button data-action="{./action}" class="btn-ghost-sm px-2 {./class}" type="button" title="{./title}" data-bs-toggle="tooltip"><i class="fa {./icon}"></i></button>
 			{{{ end }}}
