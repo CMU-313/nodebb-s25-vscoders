@@ -22,6 +22,35 @@ const relative_path = nconf.get('relative_path');
 const upload_url = nconf.get('upload_url');
 const validSorts = ['oldest_to_newest', 'newest_to_oldest', 'most_votes'];
 
+topicsController.create = async function (req, res) {
+    const { title, content, cid, tags } = req.body;
+
+    // Check if the anonymous post checkbox is checked
+    const isAnonymous = req.body['anonymous-post'] === 'on';
+
+    // Prepare the topic data
+    const topicData = {
+        title: title,
+        content: content,
+        cid: cid,
+        tags: tags,
+        uid: req.uid, // Default to the current user's ID
+        timestamp: Date.now(),
+        is_anonymous: isAnonymous ? 1 : 0, // Add the anonymous flag
+    };
+
+    // If anonymous post is enabled, modify the user data
+    if (isAnonymous) {
+        topicData.username = 'Anonymous'; // Set the username to "Anonymous"
+    }
+
+    // Create the topic
+    const tid = await topics.create(topicData);
+
+    // Redirect or respond with the new topic ID
+    res.redirect(`/topic/${tid}`);
+};
+
 topicsController.get = async function getTopic(req, res, next) {
 	const tid = req.params.topic_id;
 	if (
@@ -35,6 +64,14 @@ topicsController.get = async function getTopic(req, res, next) {
 	if (!topicData) {
 		return next();
 	}
+
+	// Check if the topic is anonymous
+	if (topicData.is_anonymous) {
+		topicData.username = 'Anonymous'; // Override the username
+		topicData.userslug = 'anonymous'; // Override the userslug
+		topicData.picture = ''; // Remove the user's profile picture
+	}
+
 	const [
 		userPrivileges,
 		settings,
