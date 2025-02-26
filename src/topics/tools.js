@@ -23,6 +23,12 @@ module.exports = function (Topics) {
 		return await toggleDelete(tid, uid, false);
 	};
 
+	function validateData(canDelete, isDelete, canRestore) {
+		if ((!canDelete && isDelete) || (!canRestore && !isDelete)) {
+			throw new Error('[[error:no-privileges]]');
+		}
+	}
+
 	async function toggleDelete(tid, uid, isDelete) {
 		const topicData = await Topics.getTopicData(tid);
 		if (!topicData) {
@@ -37,9 +43,8 @@ module.exports = function (Topics) {
 		const hook = isDelete ? 'delete' : 'restore';
 		const data = await plugins.hooks.fire(`filter:topic.${hook}`, { topicData: topicData, uid: uid, isDelete: isDelete, canDelete: canDelete, canRestore: canDelete });
 
-		if ((!data.canDelete && data.isDelete) || (!data.canRestore && !data.isDelete)) {
-			throw new Error('[[error:no-privileges]]');
-		}
+		validateData(data.canDelete, data.isDelete, data.canRestore);
+		
 		if (data.topicData.deleted && data.isDelete) {
 			throw new Error('[[error:topic-already-deleted]]');
 		} else if (!data.topicData.deleted && !data.isDelete) {
