@@ -70,6 +70,21 @@ Events._types = {
 	},
 };
 
+Events._types.makePrivate = {
+	icon: 'fa-eye-slash',
+	translation: async (event, language) => {
+	  // 这个函数里可使用上面写好的 translateSimple/translateEventArgs
+	  // 显示"用户将主题设为私有"的翻译
+	  return await translateSimple(event, language, 'topic:user-make-topic-private');
+	},
+  };
+  Events._types.makePublic = {
+	icon: 'fa-eye',
+	translation: async (event, language) => {
+	  return await translateSimple(event, language, 'topic:user-make-topic-public');
+	},
+  };
+
 Events.init = async () => {
 	// Allow plugins to define additional topic event types
 	const { types } = await plugins.hooks.fire('filter:topicEvents.init', { types: Events._types });

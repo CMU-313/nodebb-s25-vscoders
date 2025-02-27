@@ -161,6 +161,19 @@ topicsAPI.unlock = async function (caller, data) {
 	});
 };
 
+topicsAPI.makePrivate = async (caller, data) => {
+	await doTopicAction('makePrivate', 'event:topic_made_private', caller, {
+	  tids: [ data.tid ],
+	});
+  };
+  
+  topicsAPI.makePublic = async (caller, data) => {
+	await doTopicAction('makePublic', 'event:topic_made_public', caller, {
+	  tids: [ data.tid ],
+	});
+  };
+  
+
 topicsAPI.follow = async function (caller, data) {
 	await topics.follow(data.tid, caller.uid);
 };
