@@ -86,17 +86,15 @@ Topics.unlock = async (req, res) => {
 };
 
 Topics.makePrivate = async (req, res) => {
-	const tid = req.params.tid;
-	await api.topics.makePrivate(req, { tid: tid });
+	await api.topics.makePrivate(req, { tid: [req.params.tid] });
 	helpers.formatApiResponse(200, res);
-  };
-  
+};
+
 Topics.makePublic = async (req, res) => {
-	const tid = req.params.tid;
-	await api.topics.makePublic(req, { tid: tid });
+	await api.topics.makePublic(req, { tid: [req.params.tid] });
 	helpers.formatApiResponse(200, res);
-  };
-  
+};
+
 
 Topics.follow = async (req, res) => {
 	await api.topics.follow(req, req.params);
