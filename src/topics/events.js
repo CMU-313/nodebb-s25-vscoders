@@ -73,8 +73,6 @@ Events._types = {
 Events._types.makePrivate = {
 	icon: 'fa-eye-slash',
 	translation: async (event, language) => {
-	  // 这个函数里可使用上面写好的 translateSimple/translateEventArgs
-	  // 显示"用户将主题设为私有"的翻译
 	  return await translateSimple(event, language, 'topic:user-make-topic-private');
 	},
   };

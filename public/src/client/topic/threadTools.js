@@ -305,20 +305,12 @@ define('forum/topic/threadTools', [
 
 	ThreadTools.setPrivateState = function (data) {
 		const threadEl = components.get('topic');
-		// 1. 如果前端当前 topic 不是 data.tid，忽略
 		if (parseInt(data.tid, 10) !== parseInt(threadEl.attr('data-tid'), 10)) {
 			return;
 		}
-	
-		// 2. 判断 isPrivate
-		//    假设你也想结合权限，例如不让普通用户看到某些东西，可以像 isLocked 那样加判断
-		//    const isPrivate = data.isPrivate && !ajaxify.data.privileges.isAdminOrMod;
 		const isPrivate = !!data.isPrivate;
 		console.log(data);
 	
-		// 3. 切换按钮
-		//    （与锁定逻辑中 toggleClass('hidden', data.isLocked) 类似）
-		//    假设 "topic/make-private" / "topic/make-public" 是你的按钮 component
 		components.get('topic/make-private')
 			.toggleClass('hidden', isPrivate)
 			.parent().attr('hidden', isPrivate ? '' : null);
@@ -326,24 +318,17 @@ define('forum/topic/threadTools', [
 			.toggleClass('hidden', !isPrivate)
 			.parent().attr('hidden', !isPrivate ? '' : null);
 	
-		// 4. 如果私有时，需要隐藏“回复”、或者让访问者必须是管理员？
-		//    看你需求，类似 setLockedState 里:
 		const hideReply = !!(isPrivate && !ajaxify.data.privileges.isAdminOrMod && /* 自定义判断 */ false);
 	
-		// 假设要隐藏“回复区”
 		components.get('topic/reply/container').toggleClass('hidden', hideReply);
-		// 还可以隐藏帖子里的“回复/引用”等
 		threadEl
 			.find('[component="post"]:not(.deleted) [component="post/reply"], [component="post"]:not(.deleted) [component="post/quote"]')
 			.toggleClass('hidden', hideReply);
 	
-		// 5. 如果要给主题加一个 "private" 标签（模仿锁的🔒图标）
 		$('[component="topic/labels"] [component="topic/private"]').toggleClass('hidden', !isPrivate);
 	
-		// 6. 更新前端数据
 		ajaxify.data.private = isPrivate;
 	
-		// 7. 插入事件时间线
 		if (data.events) {
 			require(['forum/topic/posts'], function (posts) {
 				posts.addTopicEvents(data.events);

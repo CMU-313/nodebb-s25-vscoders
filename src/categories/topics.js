@@ -22,8 +22,34 @@ module.exports = function (Categories) {
 		}
 		topics.calculateTopicIndices(topicsData, data.start);
 
-		results = await plugins.hooks.fire('filter:category.topics.get', { cid: data.cid, topics: topicsData, uid: data.uid });
-		return { topics: results.topics, nextStart: data.stop + 1 };
+		const userPrivileges = await privileges.categories.get(data.cid, data.uid);
+		const isAdminOrMod = userPrivileges.isAdminOrMod;
+
+		topicsData = topicsData.filter(topic => {
+			if (parseInt(topic.private, 10) !== 1) {
+				return true;
+			}
+			const isOwner = parseInt(topic.uid, 10) === parseInt(data.uid, 10);
+			return (isOwner || isAdminOrMod);
+		});
+
+		if (!topicsData.length) {
+			return { topics: [], uid: data.uid };
+		}
+
+		topics.calculateTopicIndices(topicsData, data.start);
+
+		results = await plugins.hooks.fire('filter:category.topics.get', {
+			cid: data.cid,
+			topics: topicsData,
+			uid: data.uid,
+		});
+
+		return {
+			topics: results.topics,
+			nextStart: data.stop + 1,
+		};
+		
 	};
 
 	Categories.getTopicIds = async function (data) {
