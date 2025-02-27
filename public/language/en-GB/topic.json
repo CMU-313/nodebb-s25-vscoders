@@ -107,6 +107,8 @@
 	"ignoring.description": "Do not notify me of new replies.<br/>Do not show topic in unread.",
 
 	"thread-tools.title": "Topic Tools",
+	"thread-tools.makePublic": "Make Public",
+    "thread-tools.makePrivate": "Make Private",
 	"thread-tools.markAsUnreadForAll": "Mark Unread For All",
 	"thread-tools.pin": "Pin Topic",
 	"thread-tools.unpin": "Unpin Topic",

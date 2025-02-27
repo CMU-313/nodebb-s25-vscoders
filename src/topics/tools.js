@@ -23,6 +23,12 @@ module.exports = function (Topics) {
 		return await toggleDelete(tid, uid, false);
 	};
 
+	function validateData(canDelete, isDelete, canRestore) {
+		if ((!canDelete && isDelete) || (!canRestore && !isDelete)) {
+			throw new Error('[[error:no-privileges]]');
+		}
+	}
+
 	async function toggleDelete(tid, uid, isDelete) {
 		const topicData = await Topics.getTopicData(tid);
 		if (!topicData) {
@@ -37,9 +43,8 @@ module.exports = function (Topics) {
 		const hook = isDelete ? 'delete' : 'restore';
 		const data = await plugins.hooks.fire(`filter:topic.${hook}`, { topicData: topicData, uid: uid, isDelete: isDelete, canDelete: canDelete, canRestore: canDelete });
 
-		if ((!data.canDelete && data.isDelete) || (!data.canRestore && !data.isDelete)) {
-			throw new Error('[[error:no-privileges]]');
-		}
+		validateData(data.canDelete, data.isDelete, data.canRestore);
+		
 		if (data.topicData.deleted && data.isDelete) {
 			throw new Error('[[error:topic-already-deleted]]');
 		} else if (!data.topicData.deleted && !data.isDelete) {
@@ -109,6 +114,46 @@ module.exports = function (Topics) {
 		plugins.hooks.fire('action:topic.lock', { topic: _.clone(topicData), uid: uid });
 		return topicData;
 	}
+
+	topicTools.makePrivate = async function (tid, uid) {
+		return await togglePrivate(tid, uid, true);
+	};
+	
+	topicTools.makePublic = async function (tid, uid) {
+		return await togglePrivate(tid, uid, false);
+	};
+	
+	async function togglePrivate(tid, uid, isPrivate) {
+		// 1. 获取主题数据
+		const topicData = await Topics.getTopicFields(tid, ['tid', 'uid', 'cid', 'private']);
+		if (!topicData) {
+			throw new Error('[[error:no-topic]]');
+		}
+	
+		// 2. 权限检查
+		//    - 你可直接判断 if (!isAdminOrMod) throw new Error('[[error:no-privileges]]')
+		//      或者做更细的判断，比如只有作者和管理员能 make private...
+		const isAdminOrMod = await privileges.categories.isAdminOrMod(topicData.cid, uid);
+		if (!isAdminOrMod) {
+			throw new Error('[[error:no-privileges]]');
+		}
+	
+		// 3. 写数据库: `private=1` or `private=0`
+		await Topics.setTopicField(tid, 'private', isPrivate ? 1 : 0);
+	
+		// 4. 在 topicEvent 中留下记录
+		//    type 可以是 'makePrivate' 或 'makePublic'，这里要注意
+		//    由 doTopicAction() 会自动根据我们传进去的 type 来做
+		topicData.events = await Topics.events.log(tid, {
+			type: isPrivate ? 'makePrivate' : 'makePublic',
+			uid: uid,
+		});
+	
+		// 5. 返回给上层
+		topicData.private = isPrivate ? 1 : 0;
+		return topicData;
+	}
+	
 
 	topicTools.pin = async function (tid, uid) {
 		return await togglePin(tid, uid, true);

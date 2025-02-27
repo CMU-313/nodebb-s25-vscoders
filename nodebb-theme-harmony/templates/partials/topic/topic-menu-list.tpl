@@ -41,6 +41,19 @@
 	<a component="topic/mark-unread-for-all" href="#" class="dropdown-item rounded-1 d-flex align-items-center gap-2" role="menuitem"><i class="fa fa-fw fa-inbox text-secondary"></i> [[topic:thread-tools.markAsUnreadForAll]]</a>
 </li>
 
+<li {{{ if private }}}hidden{{{ end }}}>
+	<a component="topic/make-private" href="#" class="dropdown-item rounded-1 d-flex align-items-center gap-2">
+		<i class="fa fa-fw fa-eye-slash text-secondary"></i> [[topic:thread-tools.makePrivate]]
+	</a>
+</li>
+
+<li {{{ if !private }}}hidden{{{ end }}}>
+	<a component="topic/make-public" href="#" class="dropdown-item rounded-1 d-flex align-items-center gap-2">
+		<i class="fa fa-fw fa-eye text-secondary"></i> [[topic:thread-tools.makePublic]]
+	</a>
+</li>
+
+
 <li class="dropdown-divider"></li>
 {{{ end }}}
 
