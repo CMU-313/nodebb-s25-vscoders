@@ -23,14 +23,12 @@ module.exports = function (Categories) {
 		topics.calculateTopicIndices(topicsData, data.start);
 
 		const userPrivileges = await privileges.categories.get(data.cid, data.uid);
-		const isAdminOrMod = userPrivileges.isAdminOrMod;
-
-		topicsData = topicsData.filter(topic => {
+		topicsData = topicsData.filter((topic) => {
 			if (parseInt(topic.private, 10) !== 1) {
 				return true;
 			}
 			const isOwner = parseInt(topic.uid, 10) === parseInt(data.uid, 10);
-			return (isOwner || isAdminOrMod);
+			return (isOwner || userPrivileges.isAdminOrMod);
 		});
 
 		if (!topicsData.length) {
@@ -49,9 +47,7 @@ module.exports = function (Categories) {
 			topics: results.topics,
 			nextStart: data.stop + 1,
 		};
-		
 	};
-
 	Categories.getTopicIds = async function (data) {
 		const [pinnedTids, set] = await Promise.all([
 			Categories.getPinnedTids({ ...data, start: 0, stop: -1 }),

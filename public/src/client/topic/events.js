@@ -17,7 +17,6 @@ define('forum/topic/events', [
 	function onTopicPrivate(data) {
 		threadTools.setPrivateState({ ...data, isPrivate: true });
 	}
-	
 	function onTopicPublic(data) {
 		threadTools.setPrivateState({ ...data, isPrivate: false });
 	}
@@ -35,7 +34,7 @@ define('forum/topic/events', [
 		'event:topic_unlocked': threadTools.setLockedState,
 
 		'event:topic_made_private': onTopicPrivate,
-  		'event:topic_made_public': onTopicPublic,
+		'event:topic_made_public': onTopicPublic,
 
 		'event:topic_pinned': threadTools.setPinnedState,
 		'event:topic_unpinned': threadTools.setPinnedState,

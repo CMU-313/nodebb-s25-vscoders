@@ -55,13 +55,10 @@ define('forum/topic/threadTools', [
 			topicCommand('put', '/private', 'makePrivate');
 			return false;
 		});
-		
 		topicContainer.on('click', '[component="topic/make-public"]', function () {
 			topicCommand('del', '/private', 'makePublic');
 			return false;
 		});
-		
-
 		topicContainer.on('click', '[component="topic/pin"]', function () {
 			topicCommand('put', '/pin', 'pin');
 			return false;
@@ -310,32 +307,17 @@ define('forum/topic/threadTools', [
 		}
 		const isPrivate = !!data.isPrivate;
 		console.log(data);
-	
-		components.get('topic/make-private')
-			.toggleClass('hidden', isPrivate)
-			.parent().attr('hidden', isPrivate ? '' : null);
-		components.get('topic/make-public')
-			.toggleClass('hidden', !isPrivate)
-			.parent().attr('hidden', !isPrivate ? '' : null);
-	
-		const hideReply = !!(isPrivate && !ajaxify.data.privileges.isAdminOrMod && /* 自定义判断 */ false);
-	
+		components.get('topic/make-private').toggleClass('hidden', isPrivate).parent().attr('hidden', isPrivate ? '' : null);
+		components.get('topic/make-public').toggleClass('hidden', !isPrivate).parent().attr('hidden', !isPrivate ? '' : null);
+		const hideReply = !!(isPrivate && !ajaxify.data.privileges.isAdminOrMod && false);
 		components.get('topic/reply/container').toggleClass('hidden', hideReply);
-		threadEl
-			.find('[component="post"]:not(.deleted) [component="post/reply"], [component="post"]:not(.deleted) [component="post/quote"]')
-			.toggleClass('hidden', hideReply);
-	
+		threadEl.find('[component="post"]:not(.deleted) [component="post/reply"], [component="post"]:not(.deleted) [component="post/quote"]').toggleClass('hidden', hideReply);
 		$('[component="topic/labels"] [component="topic/private"]').toggleClass('hidden', !isPrivate);
-	
 		ajaxify.data.private = isPrivate;
-	
 		if (data.events) {
-			require(['forum/topic/posts'], function (posts) {
-				posts.addTopicEvents(data.events);
-			});
+			require(['forum/topic/posts'], function (posts) { posts.addTopicEvents(data.events); });
 		}
 	};
-	
 
 	ThreadTools.setLockedState = function (data) {
 		const threadEl = components.get('topic');
@@ -344,7 +326,6 @@ define('forum/topic/threadTools', [
 		}
 
 		const isLocked = data.isLocked && !ajaxify.data.privileges.isAdminOrMod;
-
 		components.get('topic/lock').toggleClass('hidden', data.isLocked).parent().attr('hidden', data.isLocked ? '' : null);
 		components.get('topic/unlock').toggleClass('hidden', !data.isLocked).parent().attr('hidden', !data.isLocked ? '' : null);
 

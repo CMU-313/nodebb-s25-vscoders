@@ -37,11 +37,11 @@ privsTopics.get = async function (tid, uid) {
 	const mayReply = privsTopics.canViewDeletedScheduled(topicData, {}, false, privData['topics:schedule']);
 
 	const privateVal = topicData.private ? parseInt(topicData.private, 10) : 0;
-	const canRead = true
+	let canRead = true;
 	if (privateVal === 1) {
-	  if (!isOwner && !isAdminOrMod) {
-		canRead = false;
-	  }
+		if (!isOwner && !isAdminOrMod) {
+			canRead = false;
+		}
 	}
 
 	return await plugins.hooks.fire('filter:privileges.topics.get', {
@@ -58,7 +58,6 @@ privsTopics.get = async function (tid, uid) {
 		'posts:view_deleted': privData['posts:view_deleted'] || isAdministrator,
 		read: canRead,
 		purge: (privData.purge && (isOwner || isModerator)) || isAdministrator,
-	
 		view_thread_tools: editable || deletable,
 		editable,
 		deletable,
@@ -68,7 +67,7 @@ privsTopics.get = async function (tid, uid) {
 		disabled,
 		tid,
 		uid,
-	  });
+	});
 };
 
 privsTopics.can = async function (privilege, tid, uid) {
@@ -80,7 +79,7 @@ privsTopics.filterTids = async function (privilege, tids, uid) {
 	if (!Array.isArray(tids) || !tids.length) {
 		return [];
 	}
-	
+
 	const topicsData = await topics.getTopicsFields(tids, ['tid', 'cid', 'deleted', 'scheduled', 'private', 'uid']);
 	const cids = _.uniq(topicsData.map(topic => topic.cid));
 	const results = await privsCategories.getBase(privilege, cids, uid);
@@ -94,20 +93,23 @@ privsTopics.filterTids = async function (privilege, tids, uid) {
 	const canViewDeleted = _.zipObject(cids, results.view_deleted);
 	const canViewScheduled = _.zipObject(cids, results.view_scheduled);
 
-	const filteredTids = topicsData.filter(t => {
+	const filteredTids = topicsData.filter((t) => {
 		if (!cidsSet.has(t.cid)) {
 			return false;
 		}
-		const canView = (results.isAdmin || privsTopics.canViewDeletedScheduled(t, {}, canViewDeleted[t.cid], canViewScheduled[t.cid]));
+		const canView = (results.isAdmin || privsTopics.canViewDeletedScheduled(t,
+			{},
+			canViewDeleted[t.cid],
+			canViewScheduled[t.cid]));
 		if (!canView) {
 			return false;
 		}
-		
+
 		const privateVal = t.private ? parseInt(t.private, 10) : 0;
 		if (privateVal === 1) {
-		const isOwner = parseInt(t.uid, 10) === parseInt(uid, 10);
-		if (!isOwner && !results.isAdmin) {
-			return false;
+			const isOwner = parseInt(t.uid, 10) === parseInt(uid, 10);
+			if (!isOwner && !results.isAdmin) {
+				return false;
 			}
 		}
 		return true;
