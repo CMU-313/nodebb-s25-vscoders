@@ -1,3 +1,5 @@
+### nodebb-s25-vscoders is a forked repository from the original repository 
+### Contributers: Team VSCoders(Derek Gao, Eddu Xu, Tiffany Louie, Adrian Muñoz)
 # ![NodeBB](public/images/sm-card.png)
 
 [![Workflow](https://github.com/CMU-313/NodeBB/actions/workflows/test.yaml/badge.svg)](https://github.com/CMU-313/NodeBB/actions/workflows/test.yaml)
