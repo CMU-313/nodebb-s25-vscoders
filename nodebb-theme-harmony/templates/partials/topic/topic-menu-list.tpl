@@ -31,18 +31,6 @@
 	<a component="topic/tag" href="#" class="dropdown-item rounded-1 d-flex align-items-center gap-2" role="menuitem"><i class="fa fa-fw fa-tag text-secondary"></i> [[topic:thread-tools.tag]]</a>
 </li>
 
-<li {{{ if private }}}hidden{{{ end }}}>
-	<a component="topic/make-private" href="#" class="dropdown-item rounded-1 d-flex align-items-center gap-2">
-		<i class="fa fa-fw fa-eye-slash text-secondary"></i> Make Private
-	</a>
-</li>
-
-<li {{{ if !private }}}hidden{{{ end }}}>
-	<a component="topic/make-public" href="#" class="dropdown-item rounded-1 d-flex align-items-center gap-2">
-		<i class="fa fa-fw fa-eye text-secondary"></i> Make Public
-	</a>
-</li>
-
 {{{ if !scheduled }}}
 <li>
 	<a component="topic/move-posts" href="#" class="dropdown-item rounded-1 d-flex align-items-center gap-2" role="menuitem"><i class="fa fa-fw fa-arrows text-secondary"></i> [[topic:thread-tools.move-posts]]</a>
@@ -53,10 +41,24 @@
 	<a component="topic/mark-unread-for-all" href="#" class="dropdown-item rounded-1 d-flex align-items-center gap-2" role="menuitem"><i class="fa fa-fw fa-inbox text-secondary"></i> [[topic:thread-tools.markAsUnreadForAll]]</a>
 </li>
 
+
+
+
 <li class="dropdown-divider"></li>
 {{{ end }}}
 
 {{{ if privileges.deletable }}}
+<li {{{ if private }}}hidden{{{ end }}}>
+	<a component="topic/make-private" href="#" class="dropdown-item rounded-1 d-flex align-items-center gap-2">
+		<i class="fa fa-fw fa-eye-slash text-secondary"></i> [[topic:thread-tools.makePrivate]]
+	</a>
+</li>
+
+<li {{{ if !private }}}hidden{{{ end }}}>
+	<a component="topic/make-public" href="#" class="dropdown-item rounded-1 d-flex align-items-center gap-2">
+		<i class="fa fa-fw fa-eye text-secondary"></i> [[topic:thread-tools.makePublic]]
+	</a>
+</li>
 <li {{{ if deleted }}}hidden{{{ end }}}>
 	<a component="topic/delete" href="#" class="dropdown-item rounded-1 d-flex align-items-center gap-2 {{{ if deleted }}}hidden{{{ end }}}" role="menuitem"><i class="fa fa-fw fa-trash-o text-secondary"></i> [[topic:thread-tools.delete]]</a>
 </li>
@@ -76,6 +78,7 @@
 <li>
 	<a component="topic/delete/posts" href="#" class="dropdown-item rounded-1 d-flex align-items-center gap-2" role="menuitem"><i class="fa fa-fw fa-trash-o text-secondary"></i> [[topic:thread-tools.delete-posts]]</a>
 </li>
+
 {{{ end }}}
 
 {{{ each thread_tools }}}

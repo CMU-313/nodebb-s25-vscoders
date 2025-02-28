@@ -161,6 +161,22 @@ topicsAPI.unlock = async function (caller, data) {
 	});
 };
 
+topicsAPI.makePrivate = async (caller, data) => {
+	const currentTags = await topics.getTopicTags(data.tid);
+	currentTags.push('privatepost');
+	topicsAPI.updateTags(caller, { tid: data.tid, tags: currentTags }, true);
+	await doTopicAction('makePrivate', 'event:topic_made_private', caller, {
+		tids: data.tid,
+	});
+};
+topicsAPI.makePublic = async (caller, data) => {
+	const currentTags = await topics.getTopicTags(data.tid);
+	topicsAPI.updateTags(caller, { tid: data.tid, tags: currentTags.filter(e => e !== 'privatepost') }, true);
+	await doTopicAction('makePublic', 'event:topic_made_public', caller, {
+		tids: data.tid,
+	});
+};
+
 topicsAPI.follow = async function (caller, data) {
 	await topics.follow(data.tid, caller.uid);
 };
@@ -173,8 +189,8 @@ topicsAPI.unfollow = async function (caller, data) {
 	await topics.unfollow(data.tid, caller.uid);
 };
 
-topicsAPI.updateTags = async (caller, { tid, tags }) => {
-	if (!await privileges.topics.canEdit(tid, caller.uid)) {
+topicsAPI.updateTags = async (caller, { tid, tags }, from_private = false) => {
+	if (!await privileges.topics.canEdit(tid, caller.uid) && !from_private) {
 		throw new Error('[[error:no-privileges]]');
 	}
 
@@ -188,7 +204,6 @@ topicsAPI.addTags = async (caller, { tid, tags }) => {
 	if (!await privileges.topics.canEdit(tid, caller.uid)) {
 		throw new Error('[[error:no-privileges]]');
 	}
-
 	const cid = await topics.getTopicField(tid, 'cid');
 	await topics.validateTags(tags, cid, caller.uid, tid);
 	tags = await topics.filterTags(tags, cid);

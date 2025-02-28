@@ -70,6 +70,16 @@ Events._types = {
 	},
 };
 
+Events._types.makePrivate = {
+	icon: 'fa-eye-slash',
+	translation: async (event, language) => await translateSimple(event, language, 'topic:user-make-topic-private'),
+};
+
+Events._types.makePublic = {
+	icon: 'fa-eye',
+	translation: async (event, language) => await translateSimple(event, language, 'topic:user-make-topic-public'),
+};
+
 Events.init = async () => {
 	// Allow plugins to define additional topic event types
 	const { types } = await plugins.hooks.fire('filter:topicEvents.init', { types: Events._types });

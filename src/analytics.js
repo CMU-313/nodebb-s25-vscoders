@@ -248,7 +248,7 @@ Analytics.getDailyStatsForSet = async function (set, day, numDays) {
 			hour,
 			24
 		);
-		return dayData.reduce((cur, next) => cur + next);
+		return dayData.reduce((cur, next) => cur + next, 0);
 	}
 	const hours = [];
 	while (numDays > 0) {
