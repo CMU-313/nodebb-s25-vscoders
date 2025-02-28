@@ -23,8 +23,8 @@ const meta = require('../src/meta');
 const file = require('../src/file');
 const helpers = require('./helpers');
 const utils = require('../src/utils');
+const Groups = require('../src/groups');
 const request = require('../src/request');
-const Groups = require.main.require('./src/groups');
 
 describe('Post\'s', () => {
 	let voterUid;
@@ -155,7 +155,6 @@ describe('Post\'s', () => {
 		it('should add endorsement message', async () => {
 			const endorsingUid = 1;
 			await Groups.join('administrators', endorsingUid);
-			
 			const result = await apiPosts.upvote({ uid: endorsingUid }, { pid: postData.pid, room_id: 'topic_1' });
 			assert.strictEqual(
 				result.post.content,
