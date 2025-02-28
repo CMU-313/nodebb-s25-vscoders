@@ -52,18 +52,6 @@
 	<a component="topic/delete" href="#" class="dropdown-item rounded-1 d-flex align-items-center gap-2 {{{ if deleted }}}hidden{{{ end }}}" role="menuitem"><i class="fa fa-fw fa-trash-o text-secondary"></i> [[topic:thread-tools.delete]]</a>
 </li>
 
-<li {{{ if private }}}hidden{{{ end }}}>
-	<a component="topic/make-private" href="#" class="dropdown-item rounded-1 d-flex align-items-center gap-2">
-		<i class="fa fa-fw fa-eye-slash text-secondary"></i> [[topic:thread-tools.makePrivate]]
-	</a>
-</li>
-
-<li {{{ if !private }}}hidden{{{ end }}}>
-	<a component="topic/make-public" href="#" class="dropdown-item rounded-1 d-flex align-items-center gap-2">
-		<i class="fa fa-fw fa-eye text-secondary"></i> [[topic:thread-tools.makePublic]]
-	</a>
-</li>
-
 {{{ if !scheduled }}}
 <li {{{ if !deleted }}}hidden{{{ end }}}>
 	<a component="topic/restore" href="#" class="dropdown-item rounded-1 d-flex align-items-center gap-2 {{{ if !deleted }}}hidden{{{ end }}}" role="menuitem"><i class="fa fa-fw fa-history text-secondary"></i> [[topic:thread-tools.restore]]</a>
@@ -78,6 +66,17 @@
 {{{ if privileges.isAdminOrMod }}}
 <li>
 	<a component="topic/delete/posts" href="#" class="dropdown-item rounded-1 d-flex align-items-center gap-2" role="menuitem"><i class="fa fa-fw fa-trash-o text-secondary"></i> [[topic:thread-tools.delete-posts]]</a>
+</li>
+<li {{{ if private }}}hidden{{{ end }}}>
+	<a component="topic/make-private" href="#" class="dropdown-item rounded-1 d-flex align-items-center gap-2">
+		<i class="fa fa-fw fa-eye-slash text-secondary"></i> [[topic:thread-tools.makePrivate]]
+	</a>
+</li>
+
+<li {{{ if !private }}}hidden{{{ end }}}>
+	<a component="topic/make-public" href="#" class="dropdown-item rounded-1 d-flex align-items-center gap-2">
+		<i class="fa fa-fw fa-eye text-secondary"></i> [[topic:thread-tools.makePublic]]
+	</a>
 </li>
 {{{ end }}}
 
