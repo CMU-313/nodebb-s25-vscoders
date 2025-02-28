@@ -24,6 +24,7 @@ const file = require('../src/file');
 const helpers = require('./helpers');
 const utils = require('../src/utils');
 const request = require('../src/request');
+const Groups = require.main.require('./src/groups');
 
 describe('Post\'s', () => {
 	let voterUid;
@@ -151,6 +152,18 @@ describe('Post\'s', () => {
 			await privileges.categories.give(['groups:posts:upvote', 'groups:posts:downvote'], cid, 'registered-users');
 		});
 
+		it('should add endorsement message', async () => {
+			const endorsingUid = 1;
+			await Groups.join('administrators', endorsingUid);
+			
+			const result = await apiPosts.upvote({ uid: endorsingUid }, { pid: postData.pid, room_id: 'topic_1' });
+			assert.strictEqual(
+				result.post.content,
+				'The content of test topic\n\n**✅ Admin endorsed this post**',
+				'Post content should include the endorsement message for uid=1'
+			);
+		});
+
 		it('should upvote a post', async () => {
 			const result = await apiPosts.upvote({ uid: voterUid }, { pid: postData.pid, room_id: 'topic_1' });
 			assert.equal(result.post.upvotes, 1);
@@ -161,6 +174,7 @@ describe('Post\'s', () => {
 			assert.equal(data.upvoted, true);
 			assert.equal(data.downvoted, false);
 		});
+
 
 		it('should add the pid to the :votes sorted set for that user', async () => {
 			const cid = await posts.getCidByPid(postData.pid);
