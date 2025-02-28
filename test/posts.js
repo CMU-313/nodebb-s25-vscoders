@@ -163,6 +163,16 @@ describe('Post\'s', () => {
 			);
 		});
 
+		it('should delete endorsement message', async () => {
+			const endorsingUid = 1;
+			const result = await apiPosts.downvote({ uid: endorsingUid }, { pid: postData.pid, room_id: 'topic_1' });
+			assert.strictEqual(
+				result.post.content,
+				'The content of test topic',
+				'Post content should include the endorsement message for uid=1'
+			);
+		});
+
 		it('should upvote a post', async () => {
 			const result = await apiPosts.upvote({ uid: voterUid }, { pid: postData.pid, room_id: 'topic_1' });
 			assert.equal(result.post.upvotes, 1);
