@@ -53,7 +53,7 @@ define('forum/post-queue', [
 	}
 
 	function handleContentEdit(triggerClass, editableClass, inputSelector, displayClass) {
-		console.log("came into handle content edit")
+		console.log('came into handle content edit');
 		$('.posts-list').on('click', triggerClass, function () {
 			const el = $(this);
 			const inputEl = el.parents('[data-id]').find(editableClass);
@@ -85,7 +85,7 @@ define('forum/post-queue', [
 				}
 
 				textarea.parent().addClass('hidden');
-				console.log("preview removed")
+				console.log('preview removed');
 				preview.removeClass('hidden');
 			});
 		});

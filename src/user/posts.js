@@ -68,14 +68,14 @@ module.exports = function (User) {
 
 		const lasttime = userData[field] || 0;
 
-		console.log('removed comment')
+		console.log('removed comment');
 		// if (
 		// 	!isMemberOfExempt &&
 		// 	meta.config.newbiePostDelay > 0 &&
 		// 	meta.config.newbieReputationThreshold > userData.reputation &&
 		// 	now - lasttime < meta.config.newbiePostDelay * 1000
 		// ) {
-		// 	if (meta.config.newbiewPostDelay % 60 === 0) { 
+		// 	if (meta.config.newbiewPostDelay % 60 === 0) {
 		// 		throw new Error(`[[error:too-many-posts-newbie-minutes, ${Math.floor(meta.config.newbiePostDelay / 60)}, ${meta.config.newbieReputationThreshold}]]`);
 		// 	} else {
 		// 		throw new Error(`[[error:too-many-posts-newbie, ${meta.config.newbiePostDelay}, ${meta.config.newbieReputationThreshold}]]`);

@@ -13,7 +13,7 @@ const privileges = require('../privileges');
 
 module.exports = function (Posts) {
 	Posts.create = async function (data) {
-		console.log("came into create.js");
+		console.log('came into create.js');
 		// This is an internal method, consider using Topics.reply instead
 		const { uid } = data;
 		const { tid } = data;

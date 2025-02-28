@@ -139,4 +139,8 @@ function modifyTopic(topic, fields) {
 			};
 		});
 	}
+
+	if (topic.hasOwnProperty('anonymous')) {
+		topic.anonymous = topic.anonymous === 'true' || topic.anonymous === true;
+	}
 }

@@ -121,6 +121,8 @@ describe('Topic\'s', () => {
 			});
 		});
 
+		
+
 		it('should return false for falsy uid', (done) => {
 			topics.isOwner(topic.tid, 0, (err, isOwner) => {
 				assert.ifError(err);

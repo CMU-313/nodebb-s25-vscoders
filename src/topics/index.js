@@ -124,12 +124,28 @@ Topics.getTopicsByTids = async function (tids, options) {
 		user.getSettings(uid),
 	]);
 
+	function generateRandomUsername() {
+		return crypto.randomBytes(6).toString('hex'); // Generates a random string of 12 hex characters
+	}
+
 	const sortNewToOld = callerSettings.topicPostSort === 'newest_to_oldest';
 	result.topics.forEach((topic, i) => {
 		if (topic) {
 			topic.thumbs = result.thumbs[i];
 			topic.category = result.categoriesMap[topic.cid];
-			topic.user = topic.uid ? result.usersMap[topic.uid] : { ...result.usersMap[topic.uid] };
+			// topic.user = topic.uid ? result.usersMap[topic.uid] : { ...result.usersMap[topic.uid] };
+			console.log(topic.anonymous);
+			if (topic.anonymous) {
+				topic.user = {
+					uid: 0,
+					username: generateRandomUsername(),
+					userslug: null,
+					picture: null,
+				};
+			} else {
+				topic.user = topic.uid ? result.usersMap[topic.uid] : { ...result.usersMap[topic.uid] };
+			}
+
 			if (result.tidToGuestHandle[topic.tid]) {
 				topic.user.username = validator.escape(result.tidToGuestHandle[topic.tid]);
 				topic.user.displayname = topic.user.username;

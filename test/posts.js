@@ -76,6 +76,40 @@ describe('Post\'s', () => {
 		assert.equal(data.categories[0].posts[0].pid, postResult.postData.pid);
 	});
 
+	describe('getUsername', () => {
+		it('should return a random username for anonymous posts', () => {
+		  const postData = { anonymous: true };
+		  const postObj = {};
+		  const userData = {};
+	  
+		  const result = getUsername(postObj, postData, userData);
+	  
+		  assert.ok(result.username);
+		  assert.ok(result.displayname);
+		  assert.equal(result.username, result.displayname);
+		});
+	  
+		it('should return the real username for non-anonymous posts', () => {
+		  const postData = { anonymous: false };
+		  const postObj = { uid: 1 };
+		  const userData = { 1: { username: 'testuser' } };
+	  
+		  const result = getUsername(postObj, postData, userData);
+	  
+		  assert.equal(result.username, 'testuser');
+		});
+	  
+		it('should return an empty object if postObj.uid is undefined', () => {
+		  const postData = { anonymous: false };
+		  const postObj = {};
+		  const userData = {};
+	  
+		  const result = getUsername(postObj, postData, userData);
+	  
+		  assert.deepEqual(result, {});
+		});
+	});
+
 	it('should change owner of post and topic properly', async () => {
 		const oldUid = await user.create({ username: 'olduser' });
 		const newUid = await user.create({ username: 'newuser' });

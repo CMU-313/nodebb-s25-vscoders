@@ -201,9 +201,14 @@ define('composer', [
 			title: data.title || '',
 			body: data.body || '',
 			tags: data.tags || [],
+			anonymous: data.anonymous || false,
 			modified: !!((data.title && data.title.length) || (data.body && data.body.length)),
 			isMain: true,
 		};
+
+		$('.anonymous-post').on('change', function () {
+			pushData.anonymous = $(this).is(':checked');
+		});
 
 		({ pushData } = await hooks.fire('filter:composer.topic.push', {
 			data: data,
@@ -214,6 +219,8 @@ define('composer', [
 	};
 
 	composer.addQuote = function (data) {
+		data.anonymous = data.anonymous || false;
+
 		// tid, toPid, selectedPid, title, username, text, uuid
 		data.uuid = data.uuid || composer.active;
 
@@ -268,6 +275,8 @@ define('composer', [
 	};
 
 	composer.newReply = function (data) {
+		data.anonymous = data.anonymous || false;
+
 		translator.translate(data.body, config.defaultLang, function (translated) {
 			push({
 				save_id: data.save_id,
@@ -276,6 +285,7 @@ define('composer', [
 				toPid: data.toPid,
 				title: data.title,
 				body: translated,
+				anonymous: data.anonymous,
 				modified: !!(translated && translated.length),
 				isMain: false,
 			});
@@ -283,6 +293,7 @@ define('composer', [
 	};
 
 	composer.editPost = function (data) {
+		data.anonymous = data.anonymous || false;
 		// pid, text
 		socket.emit('plugins.composer.push', data.pid, function (err, postData) {
 			if (err) {
@@ -291,6 +302,7 @@ define('composer', [
 			postData.save_id = data.save_id;
 			postData.action = 'posts.edit';
 			postData.pid = data.pid;
+			postData.anonymous = data.anonymous;
 			postData.modified = false;
 			if (data.body) {
 				postData.body = data.body;
@@ -329,6 +341,8 @@ define('composer', [
 			This method enhances a composer container with client-side sugar (preview, etc)
 			Everything in here also applies to the /compose route
 		*/
+
+		postData.anonymous = false; // field to store anonymous posting preference
 
 		if (!post_uuid && !postData) {
 			post_uuid = utils.generateUUID();
@@ -374,6 +388,10 @@ define('composer', [
 				composer.discard(post_uuid);
 				return removeComposerHistory();
 			}
+
+			postContainer.find('.anonymous-checkbox').on('change', function () {
+				postData.anonymous = $(this).is(':checked');
+			});
 
 			formatting.exitFullscreen();
 
@@ -734,6 +752,7 @@ define('composer', [
 				cid: categoryList.getSelectedCid(),
 				tags: tags.getTags(post_uuid),
 				timestamp: scheduler.getTimestamp(),
+				anonymous: postData.anonymous,
 			};
 		} else if (action === 'posts.reply') {
 			route = `/topics/${postData.tid}`;
@@ -743,6 +762,7 @@ define('composer', [
 				handle: handleEl ? handleEl.val() : undefined,
 				content: bodyEl.val(),
 				toPid: postData.toPid,
+				anonymous: postData.anonymous,
 			};
 		} else if (action === 'posts.edit') {
 			method = 'put';
@@ -756,6 +776,7 @@ define('composer', [
 				thumb: thumbEl.val() || '',
 				tags: tags.getTags(post_uuid),
 				timestamp: scheduler.getTimestamp(),
+				anonymous: postData.anonymous,
 			};
 		}
 		var submitHookData = {

@@ -1,6 +1,8 @@
 
 'use strict';
 
+// const { makeAnonymous } = require("../../../../src/api/topics");
+
 
 define('forum/topic/events', [
 	'forum/topic/postTools',
@@ -46,6 +48,8 @@ define('forum/topic/events', [
 
 		'event:new_notification': onNewNotification,
 		'event:new_post': posts.onNewPost,
+
+		'event:topic_made_anonymous': onMakeAnonymous,
 	};
 
 	Events.init = function () {

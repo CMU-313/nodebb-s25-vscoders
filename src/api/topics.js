@@ -161,6 +161,12 @@ topicsAPI.unlock = async function (caller, data) {
 	});
 };
 
+topicsAPI.makeAnonymous = async function (caller, data) {
+	await doTopicAction('makeAnonymous', 'event:topic_made_anonymous', caller, {
+		tids: [data.tid],
+	});
+};
+
 topicsAPI.follow = async function (caller, data) {
 	await topics.follow(data.tid, caller.uid);
 };

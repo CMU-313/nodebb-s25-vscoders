@@ -44,8 +44,8 @@ const validSorts = ['oldest_to_newest', 'newest_to_oldest', 'most_votes'];
 // }
 
 topicsController.get = async function getTopic(req, res, next) {
-	console.log("came into topics.js from topics controller")
-	
+	console.log('came into topics.js from topics controller');
+
 	const tid = req.params.topic_id;
 	if (
 		(req.params.post_index && !utils.isNumber(req.params.post_index) && req.params.post_index !== 'unread') ||
