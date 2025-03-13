@@ -7,6 +7,10 @@
 			<div component="category-selector-search" class="hidden position-absolute">
 				<input type="text" class="form-control" placeholder="[[search:type-to-search]]" autocomplete="off">
 			</div>
+			<div class="form-group">
+				<label for="anonymous-post">Post Anonymously</label>
+				<input type="checkbox" id="anonymous-post" name="anonymous-post">
+			</div>
 			<ul component="category/list" class="dropdown-menu category-dropdown-menu" role="menu">
 				<li component="category/no-matches" role="presentation" class="category hidden">
 					<a class="dropdown-item" role="menuitem">[[search:no-matches]]</a>

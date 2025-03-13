@@ -285,6 +285,7 @@ define('forum/topic', [
 	}
 
 	function addPostsPreviewHandler() {
+		console.log("came into here when I clicke preview")
 		if (!ajaxify.data.showPostPreviewsOnHover || utils.isMobile()) {
 			return;
 		}
