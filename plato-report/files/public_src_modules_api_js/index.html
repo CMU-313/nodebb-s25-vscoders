@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - public/src/modules/api.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>public/src/modules/api.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">66.03</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">144</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">49.15</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">1.05</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">/* eslint-disable import/no-unresolved */
+
+&#039;use strict&#039;;
+
+import { fire as fireHook } from &#039;hooks&#039;;
+import { confirm } from &#039;bootbox&#039;;
+
+const baseUrl = config.relative_path + &#039;/api/v3&#039;;
+
+async function call(options, callback) {
+	options.url = options.url.startsWith(&#039;/api&#039;) ?
+		config.relative_path + options.url :
+		baseUrl + options.url;
+
+	if (typeof callback === &#039;function&#039;) {
+		xhr(options).then(result =&gt; callback(null, result), err =&gt; callback(err));
+		return;
+	}
+
+	try {
+		const result = await xhr(options);
+		return result;
+	} catch (err) {
+		if (err.message === &#039;A valid login session was not found. Please log in and try again.&#039;) {
+			const { url } = await fireHook(&#039;filter:admin.reauth&#039;, { url: &#039;login&#039; });
+			return confirm(&#039;[[error:api.reauth-required]]&#039;, (ok) =&gt; {
+				if (ok) {
+					ajaxify.go(url);
+				}
+			});
+		}
+		throw err;
+	}
+}
+
+async function xhr(options) {
+	// Normalize body based on type
+	const { url } = options;
+	delete options.url;
+
+	if (options.data &amp;&amp; !(options.data instanceof FormData)) {
+		options.data = JSON.stringify(options.data || {});
+		options.headers[&#039;content-type&#039;] = &#039;application/json; charset=utf-8&#039;;
+	}
+
+	// Allow options to be modified by plugins, etc.
+	({ options } = await fireHook(&#039;filter:api.options&#039;, { options }));
+
+	/**
+	 * Note: pre-v4 backwards compatibility
+	 *
+	 * This module now passes in &quot;data&quot; to xhr().
+	 * This is because the &quot;filter:api.options&quot; hook (and plugins using it) expect &quot;data&quot;.
+	 * fetch() expects body, so we rename it here.
+	 *
+	 * In v4, replace all instances of &quot;data&quot; with &quot;body&quot; and record as breaking change.
+	 */
+	if (options.data) {
+		options.body = options.data;
+		delete options.data;
+	}
+
+	const res = await fetch(url, options);
+	const { headers } = res;
+	const contentType = headers.get(&#039;content-type&#039;);
+	const isJSON = contentType &amp;&amp; contentType.startsWith(&#039;application/json&#039;);
+
+	let response;
+	if (options.method !== &#039;HEAD&#039;) {
+		if (isJSON) {
+			response = await res.json();
+		} else {
+			response = await res.text();
+		}
+	}
+
+	if (!res.ok) {
+		if (response) {
+			throw new Error(isJSON ? response.status.message : response);
+		}
+		throw new Error(res.statusText);
+	}
+
+	return isJSON &amp;&amp; response &amp;&amp; response.hasOwnProperty(&#039;status&#039;) &amp;&amp; response.hasOwnProperty(&#039;response&#039;) ?
+		response.response :
+		response;
+}
+
+export function get(route, data, onSuccess) {
+	return call({
+		url: route + (data &amp;&amp; Object.keys(data).length ? (&#039;?&#039; + $.param(data)) : &#039;&#039;),
+	}, onSuccess);
+}
+
+export function head(route, data, onSuccess) {
+	return call({
+		url: route + (data &amp;&amp; Object.keys(data).length ? (&#039;?&#039; + $.param(data)) : &#039;&#039;),
+		method: &#039;HEAD&#039;,
+	}, onSuccess);
+}
+
+export function post(route, data, onSuccess) {
+	return call({
+		url: route,
+		method: &#039;POST&#039;,
+		data,
+		headers: {
+			&#039;x-csrf-token&#039;: config.csrf_token,
+		},
+	}, onSuccess);
+}
+
+export function patch(route, data, onSuccess) {
+	return call({
+		url: route,
+		method: &#039;PATCH&#039;,
+		data,
+		headers: {
+			&#039;x-csrf-token&#039;: config.csrf_token,
+		},
+	}, onSuccess);
+}
+
+export function put(route, data, onSuccess) {
+	return call({
+		url: route,
+		method: &#039;PUT&#039;,
+		data,
+		headers: {
+			&#039;x-csrf-token&#039;: config.csrf_token,
+		},
+	}, onSuccess);
+}
+
+export function del(route, data, onSuccess) {
+	return call({
+		url: route,
+		method: &#039;DELETE&#039;,
+		data,
+		headers: {
+			&#039;x-csrf-token&#039;: config.csrf_token,
+		},
+	}, onSuccess);
+}</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ cyclomatic }} <br>
+    Length : {{ halstead.length }} <br>
+    Difficulty : {{ halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

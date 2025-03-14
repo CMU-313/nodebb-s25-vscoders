@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - public/src/modules/helpers.common.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>public/src/modules/helpers.common.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">67.78</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">391</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">40.31</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">4.49</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">&#039;use strict&#039;;
+
+module.exports = function (utils, Benchpress, relative_path) {
+	Benchpress.setGlobal(&#039;true&#039;, true);
+	Benchpress.setGlobal(&#039;false&#039;, false);
+	const oneDayInMs = 24 * 60 * 60 * 1000;
+
+	const helpers = {
+		displayMenuItem,
+		buildMetaTag,
+		buildLinkTag,
+		stringify,
+		escape,
+		stripTags,
+		buildCategoryIcon,
+		buildCategoryLabel,
+		generateCategoryBackground,
+		generateChildrenCategories,
+		generateTopicClass,
+		membershipBtn,
+		spawnPrivilegeStates,
+		localeToHTML,
+		renderTopicImage,
+		renderDigestAvatar,
+		userAgentIcons,
+		buildAvatar,
+		increment,
+		generateWroteReplied,
+		generateRepliedTo,
+		generateWrote,
+		isoTimeToLocaleString,
+		shouldHideReplyContainer,
+		humanReadableNumber,
+		formattedNumber,
+		generatePlaceholderWave,
+		register,
+		__escape: identity,
+	};
+
+	function identity(str) {
+		return str;
+	}
+
+	function displayMenuItem(data, index) {
+		const item = data.navigation[index];
+		if (!item) {
+			return false;
+		}
+
+		if (item.route.match(&#039;/users&#039;) &amp;&amp; data.user &amp;&amp; !data.user.privileges[&#039;view:users&#039;]) {
+			return false;
+		}
+
+		if (item.route.match(&#039;/tags&#039;) &amp;&amp; data.user &amp;&amp; !data.user.privileges[&#039;view:tags&#039;]) {
+			return false;
+		}
+
+		if (item.route.match(&#039;/groups&#039;) &amp;&amp; data.user &amp;&amp; !data.user.privileges[&#039;view:groups&#039;]) {
+			return false;
+		}
+
+		return true;
+	}
+
+	function buildMetaTag(tag) {
+		const name = tag.name ? &#039;name=&quot;&#039; + tag.name + &#039;&quot; &#039; : &#039;&#039;;
+		const property = tag.property ? &#039;property=&quot;&#039; + tag.property + &#039;&quot; &#039; : &#039;&#039;;
+		const content = tag.content ? &#039;content=&quot;&#039; + tag.content.replace(/\n/g, &#039; &#039;) + &#039;&quot; &#039; : &#039;&#039;;
+
+		return &#039;&lt;meta &#039; + name + property + content + &#039;/&gt;\n\t&#039;;
+	}
+
+	function buildLinkTag(tag) {
+		const attributes = [&#039;link&#039;, &#039;rel&#039;, &#039;as&#039;, &#039;type&#039;, &#039;href&#039;, &#039;sizes&#039;, &#039;title&#039;, &#039;crossorigin&#039;];
+		const [link, rel, as, type, href, sizes, title, crossorigin] = attributes.map(attr =&gt; (tag[attr] ? `${attr}=&quot;${tag[attr]}&quot; ` : &#039;&#039;));
+
+		return &#039;&lt;link &#039; + link + rel + as + type + sizes + title + href + crossorigin + &#039;/&gt;\n\t&#039;;
+	}
+
+	function stringify(obj) {
+		// Turns the incoming object into a JSON string
+		return JSON.stringify(obj).replace(/&amp;/gm, &#039;&amp;amp;&#039;).replace(/&lt;/gm, &#039;&amp;lt;&#039;).replace(/&gt;/gm, &#039;&amp;gt;&#039;)
+			.replace(/&quot;/g, &#039;&amp;quot;&#039;);
+	}
+
+	function escape(str) {
+		return utils.escapeHTML(str);
+	}
+
+	function stripTags(str) {
+		return utils.stripHTMLTags(str);
+	}
+
+	function buildCategoryIcon(category, size, rounded) {
+		if (!category) {
+			return &#039;&#039;;
+		}
+
+		return `&lt;span class=&quot;icon d-inline-flex justify-content-center align-items-center align-middle ${rounded}&quot; style=&quot;${generateCategoryBackground(category)} width:${size}; height: ${size}; font-size: ${parseInt(size, 10) / 2}px;&quot;&gt;${category.icon ? `&lt;i class=&quot;fa fa-fw ${category.icon}&quot;&gt;&lt;/i&gt;` : &#039;&#039;}&lt;/span&gt;`;
+	}
+
+	function buildCategoryLabel(category, tag = &#039;a&#039;, className = &#039;&#039;) {
+		if (!category) {
+			return &#039;&#039;;
+		}
+
+		const href = tag === &#039;a&#039; ? `href=&quot;${relative_path}/category/${category.slug}&quot;` : &#039;&#039;;
+		return `&lt;${tag} ${href} class=&quot;badge px-1 text-truncate text-decoration-none ${className}&quot; style=&quot;color: ${category.color};background-color: ${category.bgColor};border-color: ${category.bgColor}!important; max-width: 70vw;&quot;&gt;
+			${category.icon &amp;&amp; category.icon !== &#039;fa-nbb-none&#039; ? `&lt;i class=&quot;fa fa-fw ${category.icon}&quot;&gt;&lt;/i&gt;` : &#039;&#039;}
+			${category.name}
+		&lt;/${tag}&gt;`;
+	}
+
+	function generateCategoryBackground(category) {
+		if (!category) {
+			return &#039;&#039;;
+		}
+		const style = [];
+
+		if (category.bgColor) {
+			style.push(&#039;background-color: &#039; + category.bgColor);
+			style.push(`border-color: ${category.bgColor}!important`);
+		}
+
+		if (category.color) {
+			style.push(&#039;color: &#039; + category.color);
+		}
+
+		if (category.backgroundImage) {
+			style.push(&#039;background-image: url(&#039; + category.backgroundImage + &#039;)&#039;);
+			if (category.imageClass) {
+				style.push(&#039;background-size: &#039; + category.imageClass);
+			}
+		}
+
+		return style.join(&#039;; &#039;) + &#039;;&#039;;
+	}
+
+	function generateChildrenCategories(category) {
+		let html = &#039;&#039;;
+		if (!category || !category.children || !category.children.length) {
+			return html;
+		}
+		category.children.forEach(function (child) {
+			if (child &amp;&amp; !child.isSection) {
+				const link = child.link ? child.link : (relative_path + &#039;/category/&#039; + child.slug);
+				html += &#039;&lt;span class=&quot;category-children-item float-start&quot;&gt;&#039; +
+					&#039;&lt;div role=&quot;presentation&quot; class=&quot;icon float-start&quot; style=&quot;&#039; + generateCategoryBackground(child) + &#039;&quot;&gt;&#039; +
+					&#039;&lt;i class=&quot;fa fa-fw &#039; + child.icon + &#039;&quot;&gt;&lt;/i&gt;&#039; +
+					&#039;&lt;/div&gt;&#039; +
+					&#039;&lt;a href=&quot;&#039; + link + &#039;&quot;&gt;&lt;small&gt;&#039; + child.name + &#039;&lt;/small&gt;&lt;/a&gt;&lt;/span&gt;&#039;;
+			}
+		});
+		html = html ? (&#039;&lt;span class=&quot;category-children&quot;&gt;&#039; + html + &#039;&lt;/span&gt;&#039;) : html;
+		return html;
+	}
+
+	function generateTopicClass(topic) {
+		const fields = [&#039;locked&#039;, &#039;pinned&#039;, &#039;deleted&#039;, &#039;unread&#039;, &#039;scheduled&#039;];
+		return fields.filter(field =&gt; !!topic[field]).join(&#039; &#039;);
+	}
+
+	// Groups helpers
+	function membershipBtn(groupObj, btnClass = &#039;&#039;) {
+		if (groupObj.isMember &amp;&amp; groupObj.name !== &#039;administrators&#039;) {
+			return `&lt;button class=&quot;btn btn-danger ${btnClass}&quot; data-action=&quot;leave&quot; data-group=&quot;${groupObj.displayName}&quot; ${(groupObj.disableLeave ? &#039; disabled&#039; : &#039;&#039;)}&gt;&lt;i class=&quot;fa fa-times&quot;&gt;&lt;/i&gt; [[groups:membership.leave-group]]&lt;/button&gt;`;
+		}
+
+		if (groupObj.isPending &amp;&amp; groupObj.name !== &#039;administrators&#039;) {
+			return `&lt;button class=&quot;btn btn-warning disabled ${btnClass}&quot;&gt;&lt;i class=&quot;fa fa-clock-o&quot;&gt;&lt;/i&gt; [[groups:membership.invitation-pending]]&lt;/button&gt;`;
+		} else if (groupObj.isInvited) {
+			return `&lt;button class=&quot;btn btn-warning&quot; data-action=&quot;rejectInvite&quot; data-group=&quot;${groupObj.displayName}&quot;&gt;[[groups:membership.reject]]&lt;/button&gt;&lt;button class=&quot;btn btn-success&quot; data-action=&quot;acceptInvite&quot; data-group=&quot;${groupObj.name}&quot;&gt;&lt;i class=&quot;fa fa-plus&quot;&gt;&lt;/i&gt; [[groups:membership.accept-invitation]]&lt;/button&gt;`;
+		} else if (!groupObj.disableJoinRequests &amp;&amp; groupObj.name !== &#039;administrators&#039;) {
+			return `&lt;button class=&quot;btn btn-success ${btnClass}&quot; data-action=&quot;join&quot; data-group=&quot;${groupObj.displayName}&quot;&gt;&lt;i class=&quot;fa fa-plus&quot;&gt;&lt;/i&gt; [[groups:membership.join-group]]&lt;/button&gt;`;
+		}
+		return &#039;&#039;;
+	}
+
+	function spawnPrivilegeStates(member, privileges, types) {
+		const states = [];
+		for (const priv in privileges) {
+			if (privileges.hasOwnProperty(priv)) {
+				states.push({
+					name: priv,
+					state: privileges[priv],
+					type: types[priv],
+				});
+			}
+		}
+		return states.map(function (priv) {
+			const guestDisabled = [&#039;groups:moderate&#039;, &#039;groups:posts:upvote&#039;, &#039;groups:posts:downvote&#039;, &#039;groups:local:login&#039;, &#039;groups:group:create&#039;];
+			const spidersEnabled = [&#039;groups:find&#039;, &#039;groups:read&#039;, &#039;groups:topics:read&#039;, &#039;groups:view:users&#039;, &#039;groups:view:tags&#039;, &#039;groups:view:groups&#039;];
+			const globalModDisabled = [&#039;groups:moderate&#039;];
+			const disabled =
+				(member === &#039;guests&#039; &amp;&amp; (guestDisabled.includes(priv.name) || priv.name.startsWith(&#039;groups:admin:&#039;))) ||
+				(member === &#039;spiders&#039; &amp;&amp; !spidersEnabled.includes(priv.name)) ||
+				(member === &#039;Global Moderators&#039; &amp;&amp; globalModDisabled.includes(priv.name));
+
+			return `
+				&lt;td data-privilege=&quot;${priv.name}&quot; data-value=&quot;${priv.state}&quot; data-type=&quot;${priv.type}&quot;&gt;
+					&lt;div class=&quot;form-check text-center&quot;&gt;
+						&lt;input class=&quot;form-check-input float-none&quot; autocomplete=&quot;off&quot; type=&quot;checkbox&quot;${(priv.state ? &#039; checked&#039; : &#039;&#039;)}${(disabled ? &#039; disabled=&quot;disabled&quot;&#039; : &#039;&#039;)} /&gt;
+					&lt;/div&gt;
+				&lt;/td&gt;
+			`;
+		}).join(&#039;&#039;);
+	}
+
+	function localeToHTML(locale, fallback) {
+		locale = locale || fallback || &#039;en-GB&#039;;
+		return locale.replace(&#039;_&#039;, &#039;-&#039;);
+	}
+
+	function renderTopicImage(topicObj) {
+		if (topicObj.thumb) {
+			return &#039;&lt;img src=&quot;&#039; + topicObj.thumb + &#039;&quot; class=&quot;img-circle user-img&quot; title=&quot;&#039; + topicObj.user.username + &#039;&quot; /&gt;&#039;;
+		}
+		return &#039;&lt;img component=&quot;user/picture&quot; data-uid=&quot;&#039; + topicObj.user.uid + &#039;&quot; src=&quot;&#039; + topicObj.user.picture + &#039;&quot; class=&quot;user-img&quot; title=&quot;&#039; + topicObj.user.username + &#039;&quot; /&gt;&#039;;
+	}
+
+	function renderDigestAvatar(block) {
+		if (block.teaser) {
+			if (block.teaser.user.picture) {
+				return &#039;&lt;img style=&quot;vertical-align: middle; width: 32px; height: 32px; border-radius: 50%;&quot; src=&quot;&#039; + block.teaser.user.picture + &#039;&quot; title=&quot;&#039; + block.teaser.user.username + &#039;&quot; /&gt;&#039;;
+			}
+			return &#039;&lt;div style=&quot;vertical-align: middle; width: 32px; height: 32px; line-height: 32px; font-size: 16px; background-color: &#039; + block.teaser.user[&#039;icon:bgColor&#039;] + &#039;; color: white; text-align: center; display: inline-block; border-radius: 50%;&quot;&gt;&#039; + block.teaser.user[&#039;icon:text&#039;] + &#039;&lt;/div&gt;&#039;;
+		}
+		if (block.user.picture) {
+			return &#039;&lt;img style=&quot;vertical-align: middle; width: 32px; height: 32px; border-radius: 50%;&quot; src=&quot;&#039; + block.user.picture + &#039;&quot; title=&quot;&#039; + block.user.username + &#039;&quot; /&gt;&#039;;
+		}
+		return &#039;&lt;div style=&quot;vertical-align: middle; width: 32px; height: 32px; line-height: 32px; font-size: 16px; background-color: &#039; + block.user[&#039;icon:bgColor&#039;] + &#039;; color: white; text-align: center; display: inline-block; border-radius: 50%;&quot;&gt;&#039; + block.user[&#039;icon:text&#039;] + &#039;&lt;/div&gt;&#039;;
+	}
+
+	function userAgentIcons(data) {
+		let icons = &#039;&#039;;
+
+		switch (data.platform) {
+			case &#039;Linux&#039;:
+				icons += &#039;&lt;i class=&quot;fa fa-fw fa-linux&quot;&gt;&lt;/i&gt;&#039;;
+				break;
+			case &#039;Microsoft Windows&#039;:
+				icons += &#039;&lt;i class=&quot;fa fa-fw fa-windows&quot;&gt;&lt;/i&gt;&#039;;
+				break;
+			case &#039;Apple Mac&#039;:
+				icons += &#039;&lt;i class=&quot;fa fa-fw fa-apple&quot;&gt;&lt;/i&gt;&#039;;
+				break;
+			case &#039;Android&#039;:
+				icons += &#039;&lt;i class=&quot;fa fa-fw fa-android&quot;&gt;&lt;/i&gt;&#039;;
+				break;
+			case &#039;iPad&#039;:
+				icons += &#039;&lt;i class=&quot;fa fa-fw fa-tablet&quot;&gt;&lt;/i&gt;&#039;;
+				break;
+			case &#039;iPod&#039;: // intentional fall-through
+			case &#039;iPhone&#039;:
+				icons += &#039;&lt;i class=&quot;fa fa-fw fa-mobile&quot;&gt;&lt;/i&gt;&#039;;
+				break;
+			default:
+				icons += &#039;&lt;i class=&quot;fa fa-fw fa-question-circle&quot;&gt;&lt;/i&gt;&#039;;
+				break;
+		}
+
+		switch (data.browser) {
+			case &#039;Chrome&#039;:
+				icons += &#039;&lt;i class=&quot;fa fa-fw fa-chrome&quot;&gt;&lt;/i&gt;&#039;;
+				break;
+			case &#039;Firefox&#039;:
+				icons += &#039;&lt;i class=&quot;fa fa-fw fa-firefox&quot;&gt;&lt;/i&gt;&#039;;
+				break;
+			case &#039;Safari&#039;:
+				icons += &#039;&lt;i class=&quot;fa fa-fw fa-safari&quot;&gt;&lt;/i&gt;&#039;;
+				break;
+			case &#039;IE&#039;:
+				icons += &#039;&lt;i class=&quot;fa fa-fw fa-internet-explorer&quot;&gt;&lt;/i&gt;&#039;;
+				break;
+			case &#039;Edge&#039;:
+				icons += &#039;&lt;i class=&quot;fa fa-fw fa-edge&quot;&gt;&lt;/i&gt;&#039;;
+				break;
+			default:
+				icons += &#039;&lt;i class=&quot;fa fa-fw fa-question-circle&quot;&gt;&lt;/i&gt;&#039;;
+				break;
+		}
+
+		return icons;
+	}
+
+	function buildAvatar(userObj, size, rounded, classNames, component) {
+		/**
+		 * userObj requires:
+		 *   - uid, picture, icon:bgColor, icon:text (getUserField w/ &quot;picture&quot; should return all 4), username
+		 * size: a picture size in the form of a value with units (e.g. 64px, 4rem, etc.)
+		 * rounded: true or false (optional, default false)
+		 * classNames: additional class names to prepend (optional, default none)
+		 * component: overrides the default component (optional, default none)
+		 */
+
+		// Try to use root context if passed-in userObj is undefined
+		if (!userObj) {
+			userObj = this;
+		}
+		classNames = classNames || &#039;&#039;;
+		const attributes = new Map([
+			[&#039;title&#039;, userObj.username],
+			[&#039;data-uid&#039;, userObj.uid],
+			[&#039;class&#039;, `avatar ${classNames}${rounded ? &#039; avatar-rounded&#039; : &#039;&#039;}`],
+		]);
+		const styles = [`--avatar-size: ${size};`];
+		const attr2String = attributes =&gt; Array.from(attributes).reduce((output, [prop, value]) =&gt; {
+			output += ` ${prop}=&quot;${value}&quot;`;
+			return output;
+		}, &#039;&#039;);
+
+		let output = &#039;&#039;;
+
+		if (userObj.picture) {
+			output += `&lt;img${attr2String(attributes)} alt=&quot;${userObj.username}&quot; loading=&quot;lazy&quot; component=&quot;${component || &#039;avatar/picture&#039;}&quot; src=&quot;${userObj.picture}&quot; style=&quot;${styles.join(&#039; &#039;)}&quot; onError=&quot;this.remove()&quot; itemprop=&quot;image&quot; /&gt;`;
+		}
+		output += `&lt;span${attr2String(attributes)} component=&quot;${component || &#039;avatar/icon&#039;}&quot; style=&quot;${styles.join(&#039; &#039;)} background-color: ${userObj[&#039;icon:bgColor&#039;]}&quot;&gt;${userObj[&#039;icon:text&#039;]}&lt;/span&gt;`;
+		return output;
+	}
+
+	function increment(value, inc) {
+		return String(value + parseInt(inc, 10));
+	}
+
+	function generateWroteReplied(post, timeagoCutoff) {
+		if (post.toPid) {
+			return generateRepliedTo(post, timeagoCutoff);
+		}
+		return generateWrote(post, timeagoCutoff);
+	}
+
+	function generateRepliedTo(post, timeagoCutoff) {
+		const displayname = post.parent &amp;&amp; post.parent.displayname ?
+			post.parent.displayname : &#039;[[global:guest]]&#039;;
+		const isBeforeCutoff = post.timestamp &lt; (Date.now() - (timeagoCutoff * oneDayInMs));
+		const langSuffix = isBeforeCutoff ? &#039;on&#039; : &#039;ago&#039;;
+		return `[[topic:replied-to-user-${langSuffix}, ${post.toPid}, ${relative_path}/post/${post.toPid}, ${displayname}, ${relative_path}/post/${post.pid}, ${post.timestampISO}]]`;
+	}
+
+	function generateWrote(post, timeagoCutoff) {
+		const isBeforeCutoff = post.timestamp &lt; (Date.now() - (timeagoCutoff * oneDayInMs));
+		const langSuffix = isBeforeCutoff ? &#039;on&#039; : &#039;ago&#039;;
+		return `[[topic:wrote-${langSuffix}, ${relative_path}/post/${post.pid}, ${post.timestampISO}]]`;
+	}
+
+	function isoTimeToLocaleString(isoTime, locale = &#039;en-GB&#039;) {
+		return new Date(isoTime).toLocaleString([locale], {
+			dateStyle: &#039;short&#039;,
+			timeStyle: &#039;short&#039;,
+		}).replace(/,/g, &#039;&amp;#44;&#039;);
+	}
+
+	function shouldHideReplyContainer(post) {
+		if (post.replies.count &lt;= 0 || post.replies.hasSingleImmediateReply) {
+			return true;
+		}
+
+		return false;
+	}
+
+	function humanReadableNumber(number, toFixed = 1) {
+		return utils.makeNumberHumanReadable(number, toFixed);
+	}
+
+	function formattedNumber(number) {
+		return utils.addCommas(number);
+	}
+
+	function generatePlaceholderWave(items) {
+		const html = items.map((i) =&gt; {
+			if (i === &#039;divider&#039;) {
+				return &#039;&lt;li class=&quot;dropdown-divider&quot;&gt;&lt;/li&gt;&#039;;
+			}
+			return `
+			&lt;li class=&quot;dropdown-item placeholder-wave&quot;&gt;
+				&lt;div class=&quot;placeholder&quot; style=&quot;width: 20px;&quot;&gt;&lt;/div&gt;
+				&lt;div class=&quot;placeholder col-${i}&quot;&gt;&lt;/div&gt;
+			&lt;/li&gt;`;
+		});
+
+		return html;
+	}
+
+	function register() {
+		Object.keys(helpers).forEach(function (helperName) {
+			Benchpress.registerHelper(helperName, helpers[helperName]);
+		});
+	}
+
+	return helpers;
+};</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ cyclomatic }} <br>
+    Length : {{ halstead.length }} <br>
+    Difficulty : {{ halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - public/src/modules/navigator.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>public/src/modules/navigator.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">65.02</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">756</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">70.99</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">10.35</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">&#039;use strict&#039;;
+
+define(&#039;navigator&#039;, [
+	&#039;forum/pagination&#039;, &#039;components&#039;, &#039;hooks&#039;, &#039;alerts&#039;, &#039;translator&#039;, &#039;storage&#039;,
+], function (pagination, components, hooks, alerts, translator, storage) {
+	const navigator = {};
+	let index = 0;
+	let count = 0;
+	let remaining = 0;
+	let navigatorUpdateTimeoutId;
+
+	let renderPostIntervalId;
+	let touchX;
+	let touchY;
+	let renderPostIndex;
+	let isNavigating = false;
+	let firstMove = true;
+	let bsEnv = &#039;&#039;;
+	navigator.scrollActive = false;
+
+	let paginationBlockEl = $(&#039;.pagination-block&#039;);
+	let paginationTextEl = paginationBlockEl.find(&#039;.pagination-text&#039;);
+	let paginationBlockMeterEl = paginationBlockEl.find(&#039;meter&#039;);
+	let paginationBlockProgressEl = paginationBlockEl.find(&#039;.progress-bar&#039;);
+	let paginationBlockUnreadEl = paginationBlockEl.find(&#039;.unread&#039;);
+	let thumbs;
+
+	$(window).on(&#039;action:ajaxify.start&#039;, function () {
+		$(window).off(&#039;keydown&#039;, onKeyDown);
+	});
+
+	navigator.init = function (selector, count, toTop, toBottom, callback) {
+		index = 0;
+		navigator.selector = selector;
+		navigator.callback = callback;
+		navigator.toTop = toTop || function () {};
+		navigator.toBottom = toBottom || function () {};
+
+		paginationBlockEl = $(&#039;.pagination-block&#039;);
+		paginationTextEl = paginationBlockEl.find(&#039;.pagination-text&#039;);
+		paginationBlockMeterEl = paginationBlockEl.find(&#039;meter&#039;);
+		paginationBlockProgressEl = paginationBlockEl.find(&#039;.progress-bar&#039;);
+		paginationBlockUnreadEl = paginationBlockEl.find(&#039;.unread&#039;);
+
+		thumbs = $(&#039;.scroller-thumb&#039;);
+		bsEnv = utils.findBootstrapEnvironment();
+
+		$(window).off(&#039;scroll&#039;, navigator.delayedUpdate).on(&#039;scroll&#039;, navigator.delayedUpdate);
+
+		paginationBlockEl.find(&#039;.dropdown-menu&#039;).off(&#039;click&#039;).on(&#039;click&#039;, function (e) {
+			e.stopPropagation();
+		});
+
+		paginationBlockEl.off(&#039;shown.bs.dropdown&#039;, &#039;.wrapper&#039;).on(&#039;shown.bs.dropdown&#039;, &#039;.wrapper&#039;, function () {
+			const el = $(this);
+			setTimeout(async function () {
+				if ([&#039;lg&#039;, &#039;xl&#039;, &#039;xxl&#039;].includes(utils.findBootstrapEnvironment())) {
+					el.find(&#039;input&#039;).trigger(&#039;focus&#039;);
+				}
+				const postCountInTopic = await socket.emit(&#039;topics.getPostCountInTopic&#039;, ajaxify.data.tid);
+				if (postCountInTopic &gt; 0) {
+					paginationBlockEl.find(&#039;#myNextPostBtn&#039;).removeAttr(&#039;disabled&#039;);
+				}
+			}, 100);
+		});
+		paginationBlockEl.find(&#039;.pageup&#039;).off(&#039;click&#039;).on(&#039;click&#039;, navigator.scrollUp);
+		paginationBlockEl.find(&#039;.pagedown&#039;).off(&#039;click&#039;).on(&#039;click&#039;, navigator.scrollDown);
+		paginationBlockEl.find(&#039;.pagetop&#039;).off(&#039;click&#039;).on(&#039;click&#039;, navigator.toTop);
+		paginationBlockEl.find(&#039;.pagebottom&#039;).off(&#039;click&#039;).on(&#039;click&#039;, navigator.toBottom);
+		paginationBlockEl.find(&#039;.pageprev&#039;).off(&#039;click&#039;).on(&#039;click&#039;, pagination.previousPage);
+		paginationBlockEl.find(&#039;.pagenext&#039;).off(&#039;click&#039;).on(&#039;click&#039;, pagination.nextPage);
+		paginationBlockEl.find(&#039;#myNextPostBtn&#039;).off(&#039;click&#039;).on(&#039;click&#039;, gotoMyNextPost);
+
+		paginationBlockEl.find(&#039;input&#039;).on(&#039;keydown&#039;, function (e) {
+			if (e.which === 13) {
+				const input = $(this);
+				if (!utils.isNumber(input.val())) {
+					input.val(&#039;&#039;);
+					return;
+				}
+
+				const index = parseInt(input.val(), 10);
+				const url = generateUrl(index);
+				input.val(&#039;&#039;);
+				paginationBlockEl.find(&#039;.dopdown-menu.show&#039;).removeClass(&#039;show&#039;);
+				ajaxify.go(url);
+			}
+		});
+
+		if (ajaxify.data.template.topic) {
+			handleScrollNav();
+			remaining = ajaxify.data.postcount;
+			updateUnreadIndicator(ajaxify.data.postIndex);
+		}
+
+		handleKeys();
+
+		navigator.setCount(count);
+		navigator.update();
+	};
+
+	let lastNextIndex = 0;
+	async function gotoMyNextPost() {
+		async function getNext(startIndex) {
+			return await socket.emit(&#039;topics.getMyNextPostIndex&#039;, {
+				tid: ajaxify.data.tid,
+				index: Math.max(1, startIndex),
+				sort: config.topicPostSort,
+			});
+		}
+		if (ajaxify.data.template.topic) {
+			let nextIndex = await getNext(index);
+			if (lastNextIndex === nextIndex) { // handles last post in pagination
+				nextIndex = await getNext(nextIndex);
+			}
+			if (nextIndex &amp;&amp; index !== nextIndex + 1) {
+				lastNextIndex = nextIndex;
+				$(window).one(&#039;action:ajaxify.end&#039;, function () {
+					if (paginationBlockEl.find(&#039;.dropdown-menu&#039;).is(&#039;:hidden&#039;)) {
+						paginationBlockEl.find(&#039;.dropdown-toggle&#039;).dropdown(&#039;toggle&#039;);
+					}
+				});
+				navigator.scrollToIndex(nextIndex, true, 0);
+			} else {
+				alerts.alert({
+					message: &#039;[[topic:no-more-next-post]]&#039;,
+					type: &#039;info&#039;,
+				});
+
+				lastNextIndex = 1;
+			}
+		}
+	}
+
+	function clampTop(thumb, newTop) {
+		const parent = thumb.parent();
+		const parentOffset = parent.offset();
+		const thumbIcon = thumb.find(&#039;.scroller-thumb-icon&#039;);
+		const thumbIconHeight = thumbIcon.height();
+		if (newTop &lt; parentOffset.top) {
+			newTop = parentOffset.top;
+		} else if (newTop &gt; parentOffset.top + parent.height() - thumbIconHeight) {
+			newTop = parentOffset.top + parent.height() - thumbIconHeight;
+		}
+		return newTop;
+	}
+
+	function setThumbToIndex(index) {
+		if (!thumbs || !thumbs.length || !thumbs.is(&#039;:visible&#039;)) {
+			return;
+		}
+
+		thumbs.each((i, el) =&gt; {
+			const thumb = $(el);
+			if (thumb.is(&#039;:hidden&#039;)) {
+				return;
+			}
+
+			const parent = thumb.parent();
+			const parentOffset = parent.offset();
+			const thumbIcon = thumb.find(&#039;.scroller-thumb-icon&#039;);
+			const thumbIconHeight = thumbIcon.height();
+			const gap = (parent.height() - thumbIconHeight) / (ajaxify.data.postcount - 1);
+			const newTop = clampTop(thumb, parentOffset.top + ((index - 1) * gap));
+			const offset = { top: newTop, left: thumb.offset().left };
+			thumb.offset(offset);
+			updateThumbTextToIndex(thumb, index);
+			updateThumbTimestampToIndex(thumb, index);
+		});
+
+		updateUnreadIndicator(index);
+		renderPost(index);
+	}
+
+	function updateThumbTextToIndex(thumb, index) {
+		if (bsEnv === &#039;xs&#039; || bsEnv === &#039;sm&#039; || bsEnv === &#039;md&#039;) {
+			thumb.find(&#039;.thumb-text&#039;).text(`${index}/${ajaxify.data.postcount}`);
+		} else {
+			thumb.find(&#039;.thumb-text&#039;).translateText(`[[topic:navigator.index, ${index}, ${ajaxify.data.postcount}]]`);
+		}
+	}
+
+	async function updateThumbTimestampToIndex(thumb, index) {
+		const el = thumb.find(&#039;.thumb-timestamp&#039;);
+		if (el.length) {
+			const postAtIndex = ajaxify.data.posts.find(
+				p =&gt; parseInt(p.index, 10) === Math.max(0, parseInt(index, 10) - 1)
+			);
+			const timestamp = postAtIndex ? postAtIndex.timestamp : await getPostTimestampByIndex(index);
+			el.attr(&#039;title&#039;, utils.toISOString(timestamp)).timeago();
+		}
+	}
+
+	async function getPostTimestampByIndex(index) {
+		// load timestamp of post from DOM if it exists
+		// if not load from server
+		const postEl = $(`[component=&quot;post&quot;][data-index=${index - 1}]`);
+		if (postEl.length) {
+			return parseInt(postEl.attr(&#039;data-timestamp&#039;), 10);
+		}
+		return await socket.emit(&#039;posts.getPostTimestampByIndex&#039;, {
+			tid: ajaxify.data.tid,
+			index: index - 1,
+		});
+	}
+
+
+	function handleScrollNav() {
+		if (!thumbs.length) {
+			return;
+		}
+
+		const parents = thumbs.parent();
+		parents.off(&#039;click&#039;).on(&#039;click&#039;, function (ev) {
+			if ($(ev.target).hasClass(&#039;scroller-container&#039;)) {
+				const thumb = $(ev.target).find(&#039;.scroller-thumb&#039;);
+				const index = calculateIndexFromY(thumb, ev.pageY);
+				navigator.scrollToIndex(index - 1, true, 0);
+				return false;
+			}
+		});
+
+		function calculateIndexFromY(thumb, y) {
+			const parent = thumb.parent();
+			const thumbIcon = thumb.find(&#039;.scroller-thumb-icon&#039;);
+			const thumbIconHeight = thumbIcon.height();
+			const newTop = clampTop(thumb, y - (thumbIconHeight / 2));
+			const parentOffset = parent.offset();
+			const percent = (newTop - parentOffset.top) / (parent.height() - thumbIconHeight);
+			index = Math.max(1, Math.ceil(ajaxify.data.postcount * percent));
+			return index &gt; ajaxify.data.postcount ? ajaxify.data.postcount : index;
+		}
+
+		let mouseDragging = false;
+		hooks.on(&#039;action:ajaxify.end&#039;, function () {
+			renderPostIndex = null;
+		});
+		paginationBlockEl.find(&#039;.dropdown-menu&#039;).parent()
+			.off(&#039;shown.bs.dropdown&#039;)
+			.on(&#039;shown.bs.dropdown&#039;, function () {
+				setThumbToIndex(index);
+			});
+
+		// the thumb that&#039;s being dragged, there can be more than on on the DOM
+		let dragThumb = null;
+		const debounceUpdateThumbTimestamp = utils.debounce(updateThumbTimestampToIndex, 50);
+		function mousemove(ev) {
+			if (!dragThumb || !dragThumb.length) {
+				return;
+			}
+			const thumbIcon = dragThumb.find(&#039;.scroller-thumb-icon&#039;);
+			const thumbIconHeight = thumbIcon.height();
+			const newTop = clampTop(dragThumb, ev.pageY - (thumbIconHeight / 2));
+			dragThumb.offset({ top: newTop, left: dragThumb.offset().left });
+			const index = calculateIndexFromY(dragThumb, ev.pageY);
+			navigator.updateTextAndProgressBar();
+			updateThumbTextToIndex(dragThumb, index);
+			debounceUpdateThumbTimestamp(dragThumb, index);
+			if (firstMove) {
+				delayedRenderPost();
+			}
+			firstMove = false;
+			ev.stopPropagation();
+			return false;
+		}
+
+		thumbs.off(&#039;mousedown&#039;).on(&#039;mousedown&#039;, function (e) {
+			if (e.originalEvent.button !== 0) {
+				return;
+			}
+
+			mouseDragging = true;
+			dragThumb = $(this);
+			dragThumb.addClass(&#039;active&#039;);
+			$(window).on(&#039;mousemove&#039;, mousemove);
+			firstMove = true;
+		});
+
+		function mouseup() {
+			$(window).off(&#039;mousemove&#039;, mousemove);
+			if (mouseDragging) {
+				navigator.scrollToIndex(index - 1, true, 0);
+				paginationBlockEl.find(&#039;.dropdown-menu.show&#039;).removeClass(&#039;show&#039;);
+			}
+			clearRenderInterval();
+			mouseDragging = false;
+			firstMove = false;
+			if (dragThumb &amp;&amp; dragThumb.length) {
+				dragThumb.removeClass(&#039;active&#039;);
+			}
+			dragThumb = null;
+		}
+
+		function delayedRenderPost() {
+			clearRenderInterval();
+			renderPostIntervalId = setInterval(function () {
+				renderPost(index);
+			}, 250);
+		}
+
+		$(window).off(&#039;mousemove&#039;, mousemove);
+		$(window).off(&#039;mouseup&#039;, mouseup).on(&#039;mouseup&#039;, mouseup);
+
+		thumbs.each((i, el) =&gt; {
+			const thumb = $(el);
+
+			thumb.off(&#039;touchstart&#039;).on(&#039;touchstart&#039;, function (ev) {
+				isNavigating = true;
+				touchX = Math.min($(window).width(), Math.max(0, ev.touches[0].clientX));
+				touchY = Math.min($(window).height(), Math.max(0, ev.touches[0].clientY));
+				firstMove = true;
+				thumb.addClass(&#039;active&#039;);
+			});
+
+			thumb.off(&#039;touchmove&#039;).on(&#039;touchmove&#039;, function (ev) {
+				const windowWidth = $(window).width();
+				const windowHeight = $(window).height();
+				const deltaX = Math.abs(touchX - Math.min(windowWidth, Math.max(0, ev.touches[0].clientX)));
+				const deltaY = Math.abs(touchY - Math.min(windowHeight, Math.max(0, ev.touches[0].clientY)));
+				touchX = Math.min(windowWidth, Math.max(0, ev.touches[0].clientX));
+				touchY = Math.min(windowHeight, Math.max(0, ev.touches[0].clientY));
+
+				if (deltaY &gt;= deltaX &amp;&amp; firstMove) {
+					isNavigating = true;
+					delayedRenderPost();
+				}
+
+				if (isNavigating &amp;&amp; ev.cancelable) {
+					ev.preventDefault();
+					ev.stopPropagation();
+					const thumbIcon = thumb.find(&#039;.scroller-thumb-icon&#039;);
+					const thumbIconHeight = thumbIcon.height();
+					const newTop = clampTop(thumb, touchY + $(window).scrollTop() - (thumbIconHeight / 2));
+					thumb.offset({ top: newTop, left: thumb.offset().left });
+					const index = calculateIndexFromY(thumb, touchY + $(window).scrollTop());
+					navigator.updateTextAndProgressBar();
+					updateThumbTextToIndex(thumb, index);
+					debounceUpdateThumbTimestamp(thumb, index);
+					if (firstMove) {
+						renderPost(index);
+					}
+				}
+				firstMove = false;
+			});
+
+			thumb.off(&#039;touchend&#039;).on(&#039;touchend&#039;, function () {
+				clearRenderInterval();
+				if (isNavigating) {
+					thumb.removeClass(&#039;active&#039;);
+					navigator.scrollToIndex(index - 1, true, 0);
+					isNavigating = false;
+					paginationBlockEl.find(&#039;.dropdown-menu.show&#039;).removeClass(&#039;show&#039;);
+				}
+			});
+		});
+	}
+
+	async function updateUnreadIndicator(index) {
+		const { bookmarkThreshold } = ajaxify.data;
+		if (!paginationBlockUnreadEl.length || ajaxify.data.postcount &lt;= bookmarkThreshold || !bookmarkThreshold) {
+			return;
+		}
+		const currentBookmark = ajaxify.data.bookmark || storage.getItem(&#039;topic:&#039; + ajaxify.data.tid + &#039;:bookmark&#039;);
+		index = Math.max(index, Math.min(currentBookmark, ajaxify.data.postcount));
+		const unreadEl = paginationBlockUnreadEl.get(0);
+		const trackEl = unreadEl.parentNode;
+		const trackHeight = trackEl.getBoundingClientRect().height;
+
+		const percentage = 1 - (index / ajaxify.data.postcount);
+		unreadEl.style.height = `${trackHeight * percentage}px`;
+
+		const thumbEl = trackEl.querySelector(&#039;.scroller-thumb&#039;);
+		const thumbHeight = parseInt(thumbEl.style.height, 10);
+		const thumbBottom = parseInt(thumbEl.style.top || 0, 10) + thumbHeight;
+		const anchorEl = unreadEl.querySelector(&#039;.meta a&#039;);
+		remaining = Math.min(remaining, ajaxify.data.postcount - index);
+
+		function toggleAnchor(text) {
+			anchorEl.innerText = text;
+			anchorEl.setAttribute(&#039;aria-disabled&#039;, text ? &#039;false&#039; : &#039;true&#039;);
+			if (text) {
+				anchorEl.removeAttribute(&#039;tabindex&#039;);
+			} else {
+				anchorEl.setAttribute(&#039;tabindex&#039;, -1);
+			}
+		}
+
+		if (remaining &gt; 0 &amp;&amp; (trackHeight - thumbBottom) &gt;= thumbHeight) {
+			const text = await translator.translate(`[[topic:navigator.unread, ${remaining}]]`);
+			anchorEl.href = `${config.relative_path}/topic/${ajaxify.data.slug}/${Math.min(index + 1, ajaxify.data.postcount)}`;
+			toggleAnchor(text);
+		} else {
+			anchorEl.href = ajaxify.data.url;
+			toggleAnchor(&#039;&#039;);
+		}
+	}
+
+	function clearRenderInterval() {
+		if (renderPostIntervalId) {
+			clearInterval(renderPostIntervalId);
+			renderPostIntervalId = 0;
+		}
+	}
+
+	async function renderPost(index) {
+		if (!index || renderPostIndex === index || !paginationBlockEl.find(&#039;.post-content&#039;).is(&#039;:visible&#039;)) {
+			return;
+		}
+		renderPostIndex = index;
+
+		const postData = await socket.emit(&#039;posts.getPostSummaryByIndex&#039;, { tid: ajaxify.data.tid, index: index - 1 });
+
+		const html = await app.parseAndTranslate(&#039;partials/topic/navigation-post&#039;, { post: postData });
+		paginationBlockEl
+			.find(&#039;.post-content&#039;)
+			.html(html)
+			.find(&#039;.timeago&#039;).timeago();
+	}
+
+	function handleKeys() {
+		if (!config.usePagination) {
+			$(window).off(&#039;keydown&#039;, onKeyDown).on(&#039;keydown&#039;, onKeyDown);
+		}
+	}
+
+	function onKeyDown(ev) {
+		if (ev.target.nodeName === &#039;BODY&#039;) {
+			if (ev.shiftKey || ev.ctrlKey || ev.altKey) {
+				return;
+			}
+			if (ev.which === 36 &amp;&amp; navigator.toTop) { // home key
+				navigator.toTop();
+				return false;
+			} else if (ev.which === 35 &amp;&amp; navigator.toBottom) { // end key
+				navigator.toBottom();
+				return false;
+			}
+		}
+	}
+
+	function generateUrl(index) {
+		const pathname = window.location.pathname.replace(config.relative_path, &#039;&#039;);
+		const parts = pathname.split(&#039;/&#039;);
+		return parts[1] + &#039;/&#039; + parts[2] + &#039;/&#039; + parts[3] + (index ? &#039;/&#039; + index : &#039;&#039;);
+	}
+
+	navigator.getCount = () =&gt; count;
+
+	navigator.setCount = function (value) {
+		value = parseInt(value, 10);
+		if (value === count) {
+			return;
+		}
+		count = value;
+		navigator.updateTextAndProgressBar();
+		toggle(count &gt; 0);
+	};
+
+	navigator.show = function () {
+		toggle(true);
+	};
+
+	navigator.disable = function () {
+		count = 0;
+		index = 1;
+		navigator.callback = null;
+		navigator.selector = null;
+		$(window).off(&#039;scroll&#039;, navigator.delayedUpdate);
+
+		toggle(false);
+	};
+
+	function toggle(flag) {
+		if (flag &amp;&amp; (!ajaxify.data.template.topic &amp;&amp; !ajaxify.data.template.category)) {
+			return;
+		}
+		paginationBlockEl.toggleClass(&#039;ready&#039;, flag);
+		paginationBlockEl.toggleClass(&#039;noreplies&#039;, count &lt;= 1);
+	}
+
+	navigator.delayedUpdate = function () {
+		if (!navigatorUpdateTimeoutId) {
+			navigatorUpdateTimeoutId = setTimeout(function () {
+				navigator.update();
+				navigatorUpdateTimeoutId = undefined;
+			}, 100);
+		}
+	};
+
+	navigator.update = function () {
+		let newIndex = index;
+		const els = $(navigator.selector).filter((i, el) =&gt; !el.getAttribute(&#039;data-navigator-ignore&#039;));
+		if (els.length) {
+			newIndex = parseInt(els.first().attr(&#039;data-index&#039;), 10) + 1;
+		}
+
+		const scrollTop = $(window).scrollTop();
+		const windowHeight = $(window).height();
+		const documentHeight = $(document).height();
+		const middleOfViewport = scrollTop + (windowHeight / 2);
+		let previousDistance = Number.MAX_VALUE;
+		els.each(function () {
+			const $this = $(this);
+			const elIndex = parseInt($this.attr(&#039;data-index&#039;), 10);
+			if (elIndex &gt;= 0) {
+				const distanceToMiddle = Math.abs(middleOfViewport - ($this.offset().top + ($this.outerHeight(true) / 2)));
+				if (distanceToMiddle &gt; previousDistance) {
+					return false;
+				}
+
+				if (distanceToMiddle &lt; previousDistance) {
+					newIndex = elIndex + 1;
+					previousDistance = distanceToMiddle;
+				}
+			}
+		});
+
+		const atTop = scrollTop === 0 &amp;&amp; parseInt(els.first().attr(&#039;data-index&#039;), 10) === 0;
+		const nearBottom = scrollTop + windowHeight &gt; documentHeight - 100 &amp;&amp; parseInt(els.last().attr(&#039;data-index&#039;), 10) === count - 1;
+
+		if (atTop) {
+			newIndex = 1;
+		} else if (nearBottom) {
+			newIndex = count;
+		}
+
+		hooks.fire(&#039;action:navigator.update&#039;, { newIndex, index });
+
+		if (newIndex !== index) {
+			if (typeof navigator.callback === &#039;function&#039;) {
+				navigator.callback(newIndex, count);
+			}
+			index = newIndex;
+			navigator.updateTextAndProgressBar();
+			setThumbToIndex(index);
+		}
+
+		toggle(count &gt; 0);
+	};
+
+	navigator.getIndex = () =&gt; index;
+
+	navigator.setIndex = (newIndex) =&gt; {
+		index = newIndex + 1;
+		if (typeof navigator.callback === &#039;function&#039;) {
+			navigator.callback(index, count);
+		}
+		navigator.updateTextAndProgressBar();
+		setThumbToIndex(index);
+	};
+
+	navigator.updateTextAndProgressBar = function () {
+		if (!utils.isNumber(index)) {
+			return;
+		}
+		index = index &gt; count ? count : index;
+		if (config.usePagination) {
+			paginationTextEl.html(`&lt;i class=&quot;fa fa-file&quot;&gt;&lt;/i&gt; ${ajaxify.data.pagination.currentPage} / ${ajaxify.data.pagination.pageCount}`);
+		} else {
+			paginationTextEl.translateHtml(&#039;[[global:pagination.out-of, &#039; + index + &#039;, &#039; + count + &#039;]]&#039;);
+		}
+
+		const fraction = (index - 1) / (count - 1 || 1);
+		paginationBlockMeterEl.val(fraction);
+		paginationBlockProgressEl.width((fraction * 100) + &#039;%&#039;);
+	};
+
+	navigator.scrollUp = function () {
+		const $window = $(window);
+
+		if (config.usePagination) {
+			const atTop = $window.scrollTop() &lt;= 0;
+			if (atTop) {
+				return pagination.previousPage(function () {
+					$(&#039;body,html&#039;).scrollTop($(document).height() - $window.height());
+				});
+			}
+		}
+		$(&#039;body,html&#039;).animate({
+			scrollTop: $window.scrollTop() - $window.height(),
+		});
+	};
+
+	navigator.scrollDown = function () {
+		const $window = $(window);
+
+		if (config.usePagination) {
+			const atBottom = $window.scrollTop() &gt;= $(document).height() - $window.height();
+			if (atBottom) {
+				return pagination.nextPage();
+			}
+		}
+		$(&#039;body,html&#039;).animate({
+			scrollTop: $window.scrollTop() + $window.height(),
+		});
+	};
+
+	navigator.scrollTop = function (index) {
+		if ($(`${navigator.selector}[data-index=&quot;${index}&quot;]:not([data-navigator-ignore])`).length) {
+			navigator.scrollToIndex(index, true);
+		} else {
+			ajaxify.go(generateUrl());
+		}
+	};
+
+	navigator.scrollBottom = function (index) {
+		if (parseInt(index, 10) &lt; 0) {
+			return;
+		}
+
+		if ($(`${navigator.selector}[data-index=&quot;${index}&quot;]:not([data-navigator-ignore])`).length) {
+			navigator.scrollToIndex(index, true);
+		} else {
+			index = parseInt(index, 10) + 1;
+			ajaxify.go(generateUrl(index));
+		}
+	};
+
+	navigator.scrollToIndex = function (index, highlight, duration) {
+		const inTopic = ajaxify.data.template.topic;
+		const inCategory = ajaxify.data.template.category;
+
+		if (!utils.isNumber(index) || (!inTopic &amp;&amp; !inCategory)) {
+			return;
+		}
+
+		duration = duration !== undefined ? duration : 400;
+		navigator.scrollActive = true;
+
+		// if in topic and item already on page
+		if (inTopic &amp;&amp; components.get(&#039;post/anchor&#039;, index).length) {
+			return navigator.scrollToPostIndex(index, highlight, duration);
+		}
+
+		// if in category and item alreay on page
+		if (inCategory &amp;&amp; $(&#039;[component=&quot;category/topic&quot;][data-index=&quot;&#039; + index + &#039;&quot;]&#039;).length) {
+			return navigator.scrollToTopicIndex(index, highlight, duration);
+		}
+
+		if (!config.usePagination) {
+			navigator.scrollActive = false;
+			index = parseInt(index, 10) + 1;
+			ajaxify.go(generateUrl(index));
+			return;
+		}
+
+		const scrollMethod = inTopic ? navigator.scrollToPostIndex : navigator.scrollToTopicIndex;
+
+		const page = 1 + Math.floor(index / config.postsPerPage);
+		if (parseInt(page, 10) !== ajaxify.data.pagination.currentPage) {
+			pagination.loadPage(page, function () {
+				scrollMethod(index, highlight, duration);
+			});
+		} else {
+			scrollMethod(index, highlight, duration);
+		}
+	};
+
+	navigator.shouldScrollToPost = function (postIndex) {
+		if (!ajaxify.data.template.topic || postIndex &lt;= 1) {
+			return false;
+		}
+		const firstPostEl = $(&#039;[component=&quot;topic&quot;] [component=&quot;post&quot;]&#039;).first();
+		return parseInt(firstPostEl.attr(&#039;data-index&#039;), 10) !== postIndex - 1;
+	};
+
+	navigator.scrollToPostIndex = function (postIndex, highlight, duration) {
+		const scrollTo = $(`[component=&quot;post&quot;][data-index=&quot;${postIndex}&quot;]:not([data-navigator-ignore])`);
+		navigator.scrollToElement(scrollTo, highlight, duration, postIndex);
+	};
+
+	navigator.scrollToTopicIndex = function (topicIndex, highlight, duration) {
+		const scrollTo = $(&#039;[component=&quot;category/topic&quot;][data-index=&quot;&#039; + topicIndex + &#039;&quot;]&#039;);
+		navigator.scrollToElement(scrollTo, highlight, duration, topicIndex);
+	};
+
+	navigator.scrollToElement = async (scrollTo, highlight, duration, newIndex = null) =&gt; {
+		if (!scrollTo.length) {
+			navigator.scrollActive = false;
+			return;
+		}
+
+		await hooks.fire(&#039;filter:navigator.scroll&#039;, { scrollTo, highlight, duration, newIndex: newIndex + 1 });
+
+		const postHeight = scrollTo.outerHeight(true);
+		const navbarHeight = components.get(&#039;navbar&#039;).outerHeight(true) || 0;
+		const topicHeaderHeight = $(&#039;.topic-main-buttons&#039;).outerHeight(true) || 0;
+		const viewportHeight = $(window).height();
+
+		// Temporarily disable navigator update on scroll
+		$(window).off(&#039;scroll&#039;, navigator.delayedUpdate);
+
+		duration = duration !== undefined ? duration : 400;
+		navigator.scrollActive = true;
+		let done = false;
+
+		function animateScroll() {
+			function reenableScroll() {
+				// Re-enable onScroll behaviour
+				setTimeout(() =&gt; { // fixes race condition from jQuery — onAnimateComplete called too quickly
+					$(window).off(&#039;scroll&#039;, navigator.delayedUpdate)
+						.on(&#039;scroll&#039;, navigator.delayedUpdate);
+
+					hooks.fire(&#039;action:navigator.scrolled&#039;, { scrollTo, highlight, duration, newIndex: newIndex + 1 });
+				}, 50);
+			}
+			function onAnimateComplete() {
+				if (done) {
+					reenableScroll();
+					return;
+				}
+				done = true;
+
+				navigator.scrollActive = false;
+				highlightPost();
+
+				if (!newIndex) {
+					navigator.update();
+				} else {
+					navigator.setIndex(newIndex);
+				}
+			}
+
+			let scrollTop = 0;
+			if (postHeight &lt; viewportHeight - navbarHeight - topicHeaderHeight) {
+				scrollTop = scrollTo.offset().top - (viewportHeight / 2) + (postHeight / 2);
+			} else {
+				scrollTop = scrollTo.offset().top - navbarHeight - topicHeaderHeight;
+			}
+
+			if (duration === 0) {
+				$(window).scrollTop(scrollTop);
+				onAnimateComplete();
+				reenableScroll();
+				return;
+			}
+			$(&#039;html, body&#039;).animate({
+				scrollTop: scrollTop + &#039;px&#039;,
+			}, duration, onAnimateComplete);
+		}
+
+		function highlightPost() {
+			if (highlight) {
+				$(&#039;[component=&quot;post&quot;],[component=&quot;category/topic&quot;]&#039;).removeClass(&#039;highlight&#039;);
+				scrollTo.addClass(&#039;highlight&#039;);
+				setTimeout(function () {
+					scrollTo.removeClass(&#039;highlight&#039;);
+				}, 10000);
+			}
+		}
+
+		animateScroll();
+	};
+
+	return navigator;
+});</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ cyclomatic }} <br>
+    Length : {{ halstead.length }} <br>
+    Difficulty : {{ halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

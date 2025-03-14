@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - public/src/client/chats/messages.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>public/src/client/chats/messages.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">69.04</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">360</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">44.62</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">4.78</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">&#039;use strict&#039;;
+
+
+define(&#039;forum/chats/messages&#039;, [
+	&#039;components&#039;, &#039;hooks&#039;, &#039;bootbox&#039;, &#039;alerts&#039;,
+	&#039;messages&#039;, &#039;api&#039;, &#039;forum/topic/images&#039;, &#039;imagesloaded&#039;,
+], function (
+	components, hooks, bootbox, alerts, messagesModule, api, images, imagesLoaded
+) {
+	const messages = {};
+
+	messages.sendMessage = async function (roomId, inputEl) {
+		let message = inputEl.val();
+		if (!message.trim().length) {
+			return;
+		}
+		const chatContent = inputEl.parents(`[component=&quot;chat/messages&quot;][data-roomid=&quot;${roomId}&quot;]`);
+		inputEl.val(&#039;&#039;).trigger(&#039;input&#039;);
+
+		const chatComposer = inputEl.parents(&#039;[component=&quot;chat/composer&quot;]&#039;);
+		messages.updateRemainingLength(chatComposer);
+		messages.updateTextAreaHeight(chatContent);
+		const payload = { roomId, message };
+		({ roomId, message } = await hooks.fire(&#039;filter:chat.send&#039;, payload));
+		const replyToEl = chatComposer.find(&#039;[component=&quot;chat/composer/replying-to&quot;]&#039;);
+		const toMid = replyToEl.attr(&#039;data-tomid&#039;);
+
+		api.post(`/chats/${roomId}`, { message, toMid: toMid }).then(() =&gt; {
+			hooks.fire(&#039;action:chat.sent&#039;, { roomId, message });
+			replyToEl.addClass(&#039;hidden&#039;);
+			replyToEl.attr(&#039;data-tomid&#039;, &#039;&#039;);
+		}).catch((err) =&gt; {
+			inputEl.val(message).trigger(&#039;input&#039;);
+			messages.updateRemainingLength(chatComposer);
+			messages.updateTextAreaHeight(chatContent);
+			if (err.message === &#039;[[error:email-not-confirmed-chat]]&#039;) {
+				return messagesModule.showEmailConfirmWarning(err.message);
+			}
+
+			alerts.alert({
+				alert_id: &#039;chat_spam_error&#039;,
+				title: &#039;[[global:alert.error]]&#039;,
+				message: err.message,
+				type: &#039;danger&#039;,
+				timeout: 10000,
+			});
+		});
+	};
+
+	messages.updateRemainingLength = function (parent) {
+		const element = parent.find(&#039;[component=&quot;chat/input&quot;]&#039;);
+		parent.find(&#039;[component=&quot;chat/message/length&quot;]&#039;).text(element.val().length);
+		parent.find(&#039;[component=&quot;chat/message/remaining&quot;]&#039;).text(config.maximumChatMessageLength - element.val().length);
+		hooks.fire(&#039;action:chat.updateRemainingLength&#039;, {
+			parent: parent,
+		});
+	};
+
+	messages.updateTextAreaHeight = function (chatContentEl) {
+		const textarea = chatContentEl.find(&#039;[component=&quot;chat/input&quot;]&#039;);
+		textarea.css({ height: messages.calcAutoTextAreaHeight(textarea) + &#039;px&#039; });
+	};
+
+	messages.calcAutoTextAreaHeight = function (textarea) {
+		const scrollHeight = textarea.prop(&#039;scrollHeight&#039;);
+		const borderTopWidth = parseFloat(textarea.css(&#039;border-top-width&#039;), 10) || 0;
+		const borderBottomWidth = parseFloat(textarea.css(&#039;border-bottom-width&#039;), 10) || 0;
+		return scrollHeight + borderTopWidth + borderBottomWidth;
+	};
+
+	function autoresizeTextArea(textarea) {
+		textarea.css({ height: messages.calcAutoTextAreaHeight(textarea) + &#039;px&#039; });
+		textarea.on(&#039;input&#039;, function () {
+			textarea.css({ height: 0 });
+			textarea.css({ height: messages.calcAutoTextAreaHeight(textarea) + &#039;px&#039; });
+		});
+	}
+
+	messages.appendChatMessage = function (chatContentEl, data) {
+		const lastMsgEl = chatContentEl.find(&#039;.chat-message&#039;).last();
+		const lastSpeaker = parseInt(lastMsgEl.attr(&#039;data-uid&#039;), 10);
+		const lasttimestamp = parseInt(lastMsgEl.attr(&#039;data-timestamp&#039;), 10);
+		if (!Array.isArray(data)) {
+			data.newSet = data.toMid || lastSpeaker !== parseInt(data.fromuid, 10) ||
+				parseInt(data.timestamp, 10) &gt; parseInt(lasttimestamp, 10) + (1000 * 60 * 3);
+			data.index = parseInt(lastMsgEl.attr(&#039;data-index&#039;), 10) + 1;
+		}
+
+		messages.parseMessage(data, function (html) {
+			onMessagesParsed(chatContentEl, html, data);
+		});
+	};
+
+	function onMessagesParsed(chatContentEl, html, msgData) {
+		const newMessage = $(html);
+		const isAtBottom = messages.isAtBottom(chatContentEl);
+		newMessage.addClass(&#039;new&#039;);
+		newMessage.appendTo(chatContentEl);
+		messages.onMessagesAddedToDom(newMessage);
+		if (isAtBottom || msgData.self) {
+			messages.scrollToBottomAfterImageLoad(chatContentEl);
+			// remove some message elements if there are too many
+			const chatMsgEls = chatContentEl.find(&#039;[data-mid]&#039;);
+			if (chatMsgEls.length &gt; 150) {
+				const removeCount = chatMsgEls.length - 150;
+				chatMsgEls.slice(0, removeCount).remove();
+				chatContentEl.find(&#039;[data-mid].new&#039;).removeClass(&#039;new&#039;);
+			}
+		}
+
+		hooks.fire(&#039;action:chat.received&#039;, {
+			messageEl: newMessage,
+		});
+	}
+
+	messages.onMessagesAddedToDom = function (messageEls) {
+		messageEls.find(&#039;.timeago&#039;).timeago();
+		messageEls.find(&#039;img:not(.not-responsive)&#039;).addClass(&#039;img-fluid&#039;);
+		messageEls.find(&#039;img:not(.emoji)&#039;).each(function () {
+			images.wrapImageInLink($(this));
+		});
+		hooks.fire(&#039;action:chat.onMessagesAddedToDom&#039;, { messageEls });
+	};
+
+	messages.parseMessage = function (data, callback) {
+		const tplData = {
+			messages: data,
+			isAdminOrGlobalMod: app.user.isAdmin || app.user.isGlobalMod,
+		};
+		if (Array.isArray(data)) {
+			app.parseAndTranslate(&#039;partials/chats/messages&#039;, tplData).then(callback);
+		} else {
+			app.parseAndTranslate(&#039;partials/chats/&#039; + (data.system ? &#039;system-message&#039; : &#039;message&#039;), tplData).then(callback);
+		}
+	};
+
+	messages.isAtBottom = function (containerEl, threshold) {
+		if (containerEl.length) {
+			const distanceToBottom = containerEl[0].scrollHeight - (
+				containerEl.outerHeight() + containerEl.scrollTop()
+			);
+			return distanceToBottom &lt; (threshold || 100);
+		}
+	};
+	messages.scrollToBottomAfterImageLoad = function (containerEl) {
+		if (containerEl &amp;&amp; containerEl.length) {
+			const msgBodyEls = containerEl[0].querySelectorAll(&#039;[component=&quot;chat/message/body&quot;]&#039;);
+			imagesLoaded(msgBodyEls, () =&gt; {
+				messages.scrollToBottom(containerEl);
+			});
+		}
+	};
+
+	messages.scrollToBottom = function (containerEl) {
+		if (containerEl &amp;&amp; containerEl.length) {
+			containerEl.attr(&#039;data-ignore-next-scroll&#039;, 1);
+			containerEl.scrollTop(containerEl[0].scrollHeight - containerEl.height());
+			containerEl.parents(&#039;[component=&quot;chat/message/window&quot;]&#039;)
+				.find(&#039;[component=&quot;chat/messages/scroll-up-alert&quot;]&#039;)
+				.addClass(&#039;hidden&#039;);
+		}
+	};
+
+	messages.wrapImagesInLinks = function (containerEl) {
+		containerEl.find(&#039;[component=&quot;chat/message/body&quot;] img:not(.emoji)&#039;).each(function () {
+			images.wrapImageInLink($(this));
+		});
+	};
+
+	messages.toggleScrollUpAlert = function (containerEl) {
+		const isAtBottom = messages.isAtBottom(containerEl, 300);
+		containerEl.parents(&#039;[component=&quot;chat/message/window&quot;]&#039;)
+			.find(&#039;[component=&quot;chat/messages/scroll-up-alert&quot;]&#039;)
+			.toggleClass(&#039;hidden&#039;, isAtBottom);
+	};
+
+	messages.prepReplyTo = async function (msgEl, chatMessageWindow) {
+		const chatContent = chatMessageWindow.find(&#039;[component=&quot;chat/message/content&quot;]&#039;);
+		const composerEl = chatMessageWindow.find(&#039;[component=&quot;chat/composer&quot;]&#039;);
+		const mid = msgEl.attr(&#039;data-mid&#039;);
+		const replyToEl = composerEl.find(&#039;[component=&quot;chat/composer/replying-to&quot;]&#039;);
+		replyToEl.attr(&#039;data-tomid&#039;, mid)
+			.find(&#039;[component=&quot;chat/composer/replying-to-text&quot;]&#039;)
+			.translateText(`[[modules:chat.replying-to, ${msgEl.attr(&#039;data-username&#039;)}]]`);
+		replyToEl.removeClass(&#039;hidden&#039;);
+		replyToEl.find(&#039;[component=&quot;chat/composer/replying-to-cancel&quot;]&#039;).off(&#039;click&#039;)
+			.on(&#039;click&#039;, () =&gt; {
+				replyToEl.attr(&#039;data-tomid&#039;, &#039;&#039;);
+				replyToEl.addClass(&#039;hidden&#039;);
+			});
+
+		if (chatContent.length &amp;&amp; messages.isAtBottom(chatContent)) {
+			messages.scrollToBottom(chatContent);
+		}
+		composerEl.find(&#039;[component=&quot;chat/input&quot;]&#039;).trigger(&#039;focus&#039;);
+	};
+
+	messages.prepEdit = async function (msgEl, mid, roomId) {
+		const { content: raw } = await api.get(`/chats/${roomId}/messages/${mid}/raw`);
+		const editEl = await app.parseAndTranslate(&#039;partials/chats/edit-message&#039;, {
+			rawContent: raw,
+		});
+		const messageBody = msgEl.find(`[component=&quot;chat/message/body&quot;]`);
+		const messageControls = msgEl.find(`[component=&quot;chat/message/controls&quot;]`);
+		const chatContent = messageBody.parents(&#039;[component=&quot;chat/message/content&quot;]&#039;);
+
+		const isAtBottom = messages.isAtBottom(chatContent);
+		messageBody.addClass(&#039;hidden&#039;);
+		messageControls.addClass(&#039;hidden&#039;);
+		editEl.insertAfter(messageBody);
+
+		const textarea = editEl.find(&#039;textarea&#039;);
+
+		textarea.focus().putCursorAtEnd();
+		autoresizeTextArea(textarea);
+
+		if (chatContent.length &amp;&amp; isAtBottom) {
+			messages.scrollToBottom(chatContent);
+		}
+
+		const chats = await app.require(&#039;forum/chats&#039;);
+		const autoCompleteEl = chats.createAutoComplete(0, textarea, {
+			placement: &#039;bottom&#039;,
+		});
+
+		function finishEdit() {
+			messageBody.removeClass(&#039;hidden&#039;);
+			messageControls.removeClass(&#039;hidden&#039;);
+			editEl.remove();
+			if (autoCompleteEl) {
+				autoCompleteEl.destroy();
+			}
+		}
+		textarea.on(&#039;keyup&#039;, (e) =&gt; {
+			if (e.key === &#039;Escape&#039;) {
+				finishEdit();
+			}
+		});
+		editEl.find(&#039;[data-action=&quot;cancel&quot;]&#039;).on(&#039;click&#039;, finishEdit);
+
+		editEl.find(&#039;[data-action=&quot;save&quot;]&#039;).on(&#039;click&#039;, function () {
+			const message = textarea.val();
+			if (!message.trim().length) {
+				return;
+			}
+			api.put(`/chats/${roomId}/messages/${mid}`, { message }).then(() =&gt; {
+				finishEdit();
+				hooks.fire(&#039;action:chat.edited&#039;, { roomId, message, mid });
+			}).catch((err) =&gt; {
+				textarea.val(message).trigger(&#039;input&#039;);
+				alerts.error(err);
+			});
+		});
+
+		hooks.fire(&#039;action:chat.prepEdit&#039;, {
+			msgEl: msgEl,
+			messageId: mid,
+			roomId: roomId,
+			editEl: editEl,
+			messageBody: messageBody,
+		});
+	};
+
+	messages.addSocketListeners = function () {
+		socket.removeListener(&#039;event:chats.edit&#039;, onChatMessageEdited);
+		socket.on(&#039;event:chats.edit&#039;, onChatMessageEdited);
+
+		socket.removeListener(&#039;event:chats.delete&#039;, onChatMessageDeleted);
+		socket.on(&#039;event:chats.delete&#039;, onChatMessageDeleted);
+
+		socket.removeListener(&#039;event:chats.restore&#039;, onChatMessageRestored);
+		socket.on(&#039;event:chats.restore&#039;, onChatMessageRestored);
+	};
+
+	function onChatMessageEdited(data) {
+		data.messages.forEach(function (message) {
+			const self = parseInt(message.fromuid, 10) === parseInt(app.user.uid, 10);
+			message.self = self ? 1 : 0;
+			messages.parseMessage(message, function (html) {
+				const msgEl = components.get(&#039;chat/message&#039;, message.mid);
+				if (msgEl.length) {
+					const componentsToReplace = [
+						&#039;[component=&quot;chat/message/body&quot;]&#039;,
+						&#039;[component=&quot;chat/message/edited&quot;]&#039;,
+					];
+					componentsToReplace.forEach((cmp) =&gt; {
+						msgEl.find(cmp).replaceWith(html.find(cmp));
+					});
+					messages.onMessagesAddedToDom(components.get(&#039;chat/message&#039;, message.mid));
+				}
+				const parentEl = $(`[component=&quot;chat/message/parent&quot;][data-parent-mid=&quot;${message.mid}&quot;]`);
+				if (parentEl.length) {
+					parentEl.find(&#039;[component=&quot;chat/message/parent/content&quot;]&#039;).html(
+						html.find(&#039;[component=&quot;chat/message/body&quot;]&#039;).html()
+					);
+					messages.onMessagesAddedToDom(
+						$(`[component=&quot;chat/message/parent&quot;][data-parent-mid=&quot;${message.mid}&quot;]`)
+					);
+				}
+			});
+		});
+	}
+
+	function onChatMessageDeleted(messageId) {
+		const msgEl = components.get(&#039;chat/message&#039;, messageId);
+		const parentEl = $(`[component=&quot;chat/message/parent&quot;][data-parent-mid=&quot;${messageId}&quot;]`);
+		const isSelf = parseInt(msgEl.attr(&#039;data-uid&#039;), 10) === app.user.uid;
+		const isParentSelf = parseInt(parentEl.attr(&#039;data-uid&#039;), 10) === app.user.uid;
+		msgEl.toggleClass(&#039;deleted&#039;, true);
+		parentEl.toggleClass(&#039;deleted&#039;, true);
+		if (!isSelf) {
+			msgEl.find(&#039;[component=&quot;chat/message/body&quot;]&#039;)
+				.translateHtml(&#039;&lt;p&gt;[[modules:chat.message-deleted]]&lt;/p&gt;&#039;);
+		}
+		if (!isParentSelf) {
+			parentEl.find(&#039;[component=&quot;chat/message/parent/content&quot;]&#039;)
+				.translateHtml(&#039;&lt;p&gt;[[modules:chat.message-deleted]]&lt;/p&gt;&#039;);
+		}
+	}
+
+	function onChatMessageRestored(message) {
+		const msgEl = components.get(&#039;chat/message&#039;, message.messageId);
+		const parentEl = $(`[component=&quot;chat/message/parent&quot;][data-parent-mid=&quot;${message.messageId}&quot;]`);
+		const isSelf = parseInt(msgEl.attr(&#039;data-uid&#039;), 10) === app.user.uid;
+		const isParentSelf = parseInt(parentEl.attr(&#039;data-uid&#039;), 10) === app.user.uid;
+		msgEl.toggleClass(&#039;deleted&#039;, false);
+		parentEl.toggleClass(&#039;deleted&#039;, false);
+		if (!isSelf) {
+			msgEl.find(&#039;[component=&quot;chat/message/body&quot;]&#039;)
+				.translateHtml(message.content);
+			messages.onMessagesAddedToDom(components.get(&#039;chat/message&#039;, message.messageId));
+		}
+
+		if (!isParentSelf &amp;&amp; parentEl.length) {
+			parentEl.find(&#039;[component=&quot;chat/message/parent/content&quot;]&#039;)
+				.translateHtml(message.content);
+			messages.onMessagesAddedToDom($(`[component=&quot;chat/message/parent&quot;][data-parent-mid=&quot;${message.messageId}&quot;]`));
+		}
+	}
+
+	messages.delete = function (messageId, roomId) {
+		bootbox.confirm(&#039;[[modules:chat.delete-message-confirm]]&#039;, function (ok) {
+			if (!ok) {
+				return;
+			}
+
+			api.del(`/chats/${roomId}/messages/${messageId}`, {}).then(() =&gt; {
+				components.get(&#039;chat/message&#039;, messageId).toggleClass(&#039;deleted&#039;, true);
+			}).catch(alerts.error);
+		});
+	};
+
+	messages.restore = function (messageId, roomId) {
+		api.post(`/chats/${roomId}/messages/${messageId}`, {}).then(() =&gt; {
+			components.get(&#039;chat/message&#039;, messageId).toggleClass(&#039;deleted&#039;, false);
+		}).catch(alerts.error);
+	};
+
+	return messages;
+});</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ cyclomatic }} <br>
+    Length : {{ halstead.length }} <br>
+    Difficulty : {{ halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

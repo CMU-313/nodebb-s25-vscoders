@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - public/src/admin/settings/api.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>public/src/admin/settings/api.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">63.52</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">180</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">27.86</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">1.54</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">&#039;use strict&#039;;
+
+define(&#039;admin/settings/api&#039;, [&#039;settings&#039;, &#039;clipboard&#039;, &#039;bootbox&#039;, &#039;benchpress&#039;, &#039;api&#039;, &#039;alerts&#039;], function (settings, clipboard, bootbox, Benchpress, api, alerts) {
+	const ACP = {};
+
+	ACP.init = function () {
+		settings.load(&#039;core.api&#039;, $(&#039;.core-api-settings&#039;));
+		$(&#039;#save&#039;).on(&#039;click&#039;, () =&gt; {
+			settings.save(&#039;core.api&#039;, $(&#039;.core-api-settings&#039;));
+		});
+
+		// Click to copy
+		const copyEls = document.querySelectorAll(&#039;[data-component=&quot;acp/tokens&quot;] [data-action=&quot;copy&quot;]&#039;);
+		new clipboard(copyEls);
+
+		$(&#039;[data-action=&quot;create&quot;]&#039;).on(&#039;click&#039;, handleTokenCreation);
+
+		handleActions();
+	};
+
+	function handleActions() {
+		const formEl = document.querySelector(&#039;#content form&#039;);
+		if (!formEl) {
+			return;
+		}
+
+		formEl.addEventListener(&#039;click&#039;, (e) =&gt; {
+			const subselector = e.target.closest(&#039;[data-action]&#039;);
+			if (subselector) {
+				const action = subselector.getAttribute(&#039;data-action&#039;);
+
+				switch (action) {
+					case &#039;edit&#039;:
+						handleTokenUpdate(subselector);
+						break;
+
+					case &#039;delete&#039;:
+						handleTokenDeletion(subselector);
+						break;
+
+					case &#039;roll&#039;:
+						handleTokenRolling(subselector);
+						break;
+				}
+			}
+		});
+	}
+
+	async function handleTokenCreation() {
+		const html = await Benchpress.render(&#039;admin/partials/edit-token-modal&#039;, {});
+		const parseForm = async function () {
+			const modal = this;
+			const formEl = this.get(0).querySelector(&#039;form&#039;);
+			const tokensTableBody = document.querySelector(&#039;[data-component=&quot;acp/tokens&quot;] tbody&#039;);
+			const valid = formEl.reportValidity();
+			if (formEl &amp;&amp; valid) {
+				const formData = new FormData(formEl);
+				const uid = formData.get(&#039;uid&#039;);
+				const description = formData.get(&#039;description&#039;);
+
+				try {
+					const tokenObj = await api.post(&#039;/admin/tokens&#039;, { uid, description });
+					if (!tokensTableBody) {
+						modal.modal(&#039;hide&#039;);
+						return ajaxify.refresh();
+					}
+
+					ajaxify.data.tokens.push(tokenObj);
+					const rowEl = (await app.parseAndTranslate(ajaxify.data.template.name, &#039;tokens&#039;, {
+						tokens: [tokenObj],
+					})).get(0);
+
+					tokensTableBody.append(rowEl);
+					$(rowEl).find(&#039;.timeago&#039;).timeago();
+					modal.modal(&#039;hide&#039;);
+				} catch (e) {
+					alerts.error(e);
+				}
+			}
+
+			return false;
+		};
+
+		bootbox.dialog({
+			title: &#039;[[admin/settings/api:create-token]]&#039;,
+			message: html,
+			buttons: {
+				submit: {
+					label: &#039;[[modules:bootbox.submit]]&#039;,
+					className: &#039;btn-primary&#039;,
+					callback: parseForm,
+				},
+			},
+		});
+	}
+
+	async function handleTokenUpdate(el) {
+		const rowEl = el.closest(&#039;[data-token]&#039;);
+		const token = rowEl.getAttribute(&#039;data-token&#039;);
+		const { uid, description } = await api.get(`/admin/tokens/${token}`);
+		const parseForm = async function () {
+			const modal = this;
+			const formEl = this.get(0).querySelector(&#039;form&#039;);
+			const valid = formEl.reportValidity();
+			if (formEl &amp;&amp; valid) {
+				const formData = new FormData(formEl);
+				const uid = formData.get(&#039;uid&#039;);
+				const description = formData.get(&#039;description&#039;);
+
+				try {
+					const tokenObj = await api.put(`/admin/tokens/${token}`, { uid, description });
+					const newEl = (await app.parseAndTranslate(ajaxify.data.template.name, &#039;tokens&#039;, {
+						tokens: [tokenObj],
+					})).get(0);
+
+					rowEl.replaceWith(newEl);
+					$(newEl).find(&#039;.timeago&#039;).timeago();
+					modal.modal(&#039;hide&#039;);
+				} catch (e) {
+					alerts.error(e);
+				}
+			}
+
+			return false;
+		};
+
+		const html = await Benchpress.render(&#039;admin/partials/edit-token-modal&#039;, { uid, description });
+		bootbox.dialog({
+			title: &#039;[[admin/settings/api:update-token]]&#039;,
+			message: html,
+			buttons: {
+				submit: {
+					label: &#039;[[modules:bootbox.submit]]&#039;,
+					className: &#039;btn-primary&#039;,
+					callback: parseForm,
+				},
+			},
+		});
+	}
+
+	async function handleTokenDeletion(el) {
+		const rowEl = el.closest(&#039;[data-token]&#039;);
+		const token = rowEl.getAttribute(&#039;data-token&#039;);
+
+		bootbox.confirm(&#039;[[admin/settings/api:delete-confirm]]&#039;, async (ok) =&gt; {
+			if (ok) {
+				try {
+					await api.del(`/admin/tokens/${token}`);
+				} catch (e) {
+					alerts.error(e);
+				}
+
+				rowEl.remove();
+			}
+		});
+	}
+
+	async function handleTokenRolling(el) {
+		const rowEl = el.closest(&#039;[data-token]&#039;);
+		const token = rowEl.getAttribute(&#039;data-token&#039;);
+
+		bootbox.confirm(&#039;[[admin/settings/api:roll-confirm]]&#039;, async (ok) =&gt; {
+			if (ok) {
+				try {
+					const tokenObj = await api.post(`/admin/tokens/${token}/roll`);
+					const newEl = (await app.parseAndTranslate(ajaxify.data.template.name, &#039;tokens&#039;, {
+						tokens: [tokenObj],
+					})).get(0);
+
+					rowEl.replaceWith(newEl);
+					$(newEl).find(&#039;.timeago&#039;).timeago();
+				} catch (e) {
+					alerts.error(e);
+				}
+			}
+		});
+	}
+
+	return ACP;
+});</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ cyclomatic }} <br>
+    Length : {{ halstead.length }} <br>
+    Difficulty : {{ halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>
