@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - public/src/client/search.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>public/src/client/search.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">67.68</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">398</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">34.76</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">4.83</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">&#039;use strict&#039;;
+
+
+define(&#039;forum/search&#039;, [
+	&#039;search&#039;,
+	&#039;storage&#039;,
+	&#039;hooks&#039;,
+	&#039;alerts&#039;,
+	&#039;api&#039;,
+	&#039;translator&#039;,
+	&#039;categoryFilter&#039;,
+	&#039;userFilter&#039;,
+], function (searchModule, storage, hooks, alerts, api, translator, categoryFilter, userFilter) {
+	const Search = {};
+	let selectedUsers = [];
+	let selectedTags = [];
+	let selectedCids = [];
+	let searchFilters = {};
+	Search.init = function () {
+		const searchIn = $(&#039;#search-in&#039;);
+		searchIn.on(&#039;change&#039;, function () {
+			updateFormItemVisiblity(searchIn.val());
+		});
+
+		const searchQuery = $(&#039;#results&#039;).attr(&#039;data-search-query&#039;);
+		searchModule.highlightMatches(
+			searchQuery,
+			$(&#039;.search-results .content p, .search-results .topic-title&#039;)
+		);
+
+		$(&#039;#advanced-search form&#039;).off(&#039;submit&#039;).on(&#039;submit&#039;, function (e) {
+			e.preventDefault();
+			searchModule.query(getSearchDataFromDOM());
+			return false;
+		});
+
+		handleSavePreferences();
+
+		categoryFilterDropdown(ajaxify.data.selectedCids);
+		userFilterDropdown($(&#039;[component=&quot;user/filter&quot;]&#039;), ajaxify.data.userFilterSelected);
+		tagFilterDropdown($(&#039;[component=&quot;tag/filter&quot;]&#039;), ajaxify.data.tagFilterSelected);
+
+		$(&#039;[component=&quot;search/filters&quot;]&#039;).on(&#039;hidden.bs.dropdown&#039;, &#039;.dropdown&#039;, function () {
+			const updateFns = {
+				replies: updateReplyCountFilter,
+				time: updateTimeFilter,
+				sort: updateSortFilter,
+				tag: updateTagFilter,
+			};
+
+			if (updateFns[$(this).attr(&#039;data-filter-name&#039;)]) {
+				updateFns[$(this).attr(&#039;data-filter-name&#039;)]();
+			}
+
+			const searchFiltersNew = getSearchDataFromDOM();
+			if (JSON.stringify(searchFilters) !== JSON.stringify(searchFiltersNew)) {
+				searchFilters = searchFiltersNew;
+				searchModule.query(searchFilters);
+			}
+		});
+
+		fillOutForm();
+		updateTimeFilter();
+		updateReplyCountFilter();
+		updateSortFilter();
+
+		searchFilters = getSearchDataFromDOM();
+	};
+
+	function updateTagFilter() {
+		const isActive = selectedTags.length &gt; 0;
+		let labelText = &#039;[[search:tags]]&#039;;
+		if (selectedTags.length) {
+			labelText = translator.compile(
+				&#039;search:tags-x&#039;, selectedTags.map(u =&gt; u.valueEscaped).join(&#039;, &#039;)
+			);
+		}
+		$(&#039;[component=&quot;tag/filter/button&quot;]&#039;).toggleClass(
+			&#039;active-filter&#039;, isActive
+		).find(&#039;.filter-label&#039;).translateText(labelText);
+	}
+
+	function updateTimeFilter() {
+		const isActive = $(&#039;#post-time-range&#039;).val() &gt; 0;
+		$(&#039;#post-time-button&#039;).toggleClass(
+			&#039;active-filter&#039;, isActive
+		).find(&#039;.filter-label&#039;).translateText(
+			isActive ?
+				`[[search:time-${$(&#039;#post-time-filter&#039;).val()}-than-${$(&#039;#post-time-range&#039;).val()}]]` :
+				`[[search:time]]`
+		);
+	}
+
+	function updateSortFilter() {
+		const isActive = $(&#039;#post-sort-by&#039;).val() !== &#039;relevance&#039; || $(&#039;#post-sort-direction&#039;).val() !== &#039;desc&#039;;
+		$(&#039;#sort-by-button&#039;).toggleClass(
+			&#039;active-filter&#039;, isActive
+		).find(&#039;.filter-label&#039;).translateText(
+			isActive ?
+				`[[search:sort-by-${$(&#039;#post-sort-by&#039;).val()}-${$(&#039;#post-sort-direction&#039;).val()}]]` :
+				`[[search:sort]]`
+		);
+	}
+
+	function updateReplyCountFilter() {
+		const isActive = $(&#039;#reply-count&#039;).val() &gt; 0;
+		$(&#039;#reply-count-button&#039;).toggleClass(
+			&#039;active-filter&#039;, isActive
+		).find(&#039;.filter-label&#039;).translateText(
+			isActive ?
+				`[[search:replies-${$(&#039;#reply-count-filter&#039;).val()}-count, ${$(&#039;#reply-count&#039;).val()}]]` :
+				`[[search:replies]]`
+		);
+	}
+
+	function getSearchDataFromDOM() {
+		const form = $(&#039;#advanced-search&#039;);
+		const searchData = {
+			in: $(&#039;#search-in&#039;).val(),
+		};
+		searchData.term = $(&#039;#search-input&#039;).val();
+		if ([&#039;posts&#039;, &#039;titlesposts&#039;, &#039;titles&#039;, &#039;bookmarks&#039;].includes(searchData.in)) {
+			searchData.matchWords = form.find(&#039;#match-words-filter&#039;).val();
+			searchData.by = selectedUsers.length ? selectedUsers.map(u =&gt; u.username) : undefined;
+			searchData.categories = selectedCids.length ? selectedCids : undefined;
+			searchData.searchChildren = form.find(&#039;#search-children&#039;).is(&#039;:checked&#039;);
+			searchData.hasTags = selectedTags.length ? selectedTags.map(t =&gt; t.value) : undefined;
+			searchData.replies = form.find(&#039;#reply-count&#039;).val();
+			searchData.repliesFilter = form.find(&#039;#reply-count-filter&#039;).val();
+			searchData.timeFilter = form.find(&#039;#post-time-filter&#039;).val();
+			searchData.timeRange = form.find(&#039;#post-time-range&#039;).val();
+			searchData.sortBy = form.find(&#039;#post-sort-by&#039;).val();
+			searchData.sortDirection = form.find(&#039;#post-sort-direction&#039;).val();
+			searchData.showAs = form.find(&#039;#show-results-as&#039;).val();
+		}
+
+		hooks.fire(&#039;action:search.getSearchDataFromDOM&#039;, {
+			form: form,
+			data: searchData,
+		});
+
+		return searchData;
+	}
+
+	function updateFormItemVisiblity(searchIn) {
+		const hideTitlePostFilters = ![&#039;posts&#039;, &#039;titles&#039;, &#039;bookmarks&#039;].some(token =&gt; searchIn.includes(token));
+		$(&#039;.post-search-item&#039;).toggleClass(&#039;hidden&#039;, hideTitlePostFilters);
+	}
+
+	function fillOutForm() {
+		const params = utils.params({
+			disableToType: true,
+		});
+
+		const searchData = searchModule.getSearchPreferences();
+		const formData = utils.merge(searchData, params);
+
+		if (formData) {
+			if (ajaxify.data.term) {
+				$(&#039;#search-input&#039;).val(ajaxify.data.term);
+			}
+			formData.in = formData.in || ajaxify.data.searchDefaultIn;
+			$(&#039;#search-in&#039;).val(formData.in);
+			updateFormItemVisiblity(formData.in);
+
+			if (formData.matchWords) {
+				$(&#039;#match-words-filter&#039;).val(formData.matchWords);
+			}
+
+			if (formData.showAs) {
+				$(&#039;#show-results-as&#039;).val(formData.showAs);
+			}
+
+			if (formData.by) {
+				formData.by = Array.isArray(formData.by) ? formData.by : [formData.by];
+				formData.by.forEach(function (by) {
+					$(&#039;#posted-by-user&#039;).tagsinput(&#039;add&#039;, by);
+				});
+			}
+
+			if (formData.categories) {
+				$(&#039;#posted-in-categories&#039;).val(formData.categories);
+			}
+
+			if (formData.searchChildren) {
+				$(&#039;#search-children&#039;).prop(&#039;checked&#039;, true);
+			}
+
+			if (formData.hasTags) {
+				formData.hasTags = Array.isArray(formData.hasTags) ? formData.hasTags : [formData.hasTags];
+				formData.hasTags.forEach(function (tag) {
+					$(&#039;#has-tags&#039;).tagsinput(&#039;add&#039;, tag);
+				});
+			}
+
+			if (formData.replies) {
+				$(&#039;#reply-count&#039;).val(formData.replies);
+				$(&#039;#reply-count-filter&#039;).val(formData.repliesFilter);
+			}
+
+			if (formData.timeRange) {
+				$(&#039;#post-time-range&#039;).val(formData.timeRange);
+				$(&#039;#post-time-filter&#039;).val(formData.timeFilter);
+			}
+
+			if (formData.sortBy || ajaxify.data.searchDefaultSortBy) {
+				$(&#039;#post-sort-by&#039;).val(formData.sortBy || ajaxify.data.searchDefaultSortBy);
+			}
+			$(&#039;#post-sort-direction&#039;).val(formData.sortDirection || &#039;desc&#039;);
+
+			hooks.fire(&#039;action:search.fillOutForm&#039;, {
+				form: formData,
+			});
+		}
+	}
+
+	function handleSavePreferences() {
+		$(&#039;#save-preferences&#039;).on(&#039;click&#039;, function () {
+			const data = getSearchDataFromDOM();
+			const fieldsToSave = [
+				&#039;matchWords&#039;, &#039;in&#039;, &#039;showAs&#039;,
+				&#039;replies&#039;, &#039;repliesFilter&#039;,
+				&#039;timeFilter&#039;, &#039;timeRange&#039;,
+				&#039;sortBy&#039;, &#039;sortDirection&#039;,
+			];
+			const saveData = {};
+			fieldsToSave.forEach((key) =&gt; {
+				saveData[key] = data[key];
+			});
+			storage.setItem(&#039;search-preferences&#039;, JSON.stringify(saveData));
+			alerts.success(&#039;[[search:search-preferences-saved]]&#039;);
+			return false;
+		});
+
+		$(&#039;#clear-preferences&#039;).on(&#039;click&#039;, async function () {
+			storage.removeItem(&#039;search-preferences&#039;);
+			const html = await app.parseAndTranslate(&#039;partials/search-filters&#039;, {});
+			$(&#039;[component=&quot;search/filters&quot;]&#039;).replaceWith(html);
+			$(&#039;#search-in&#039;).val(ajaxify.data.searchDefaultIn);
+			$(&#039;#post-sort-by&#039;).val(ajaxify.data.searchDefaultSortBy);
+			$(&#039;#match-words-filter&#039;).val(&#039;all&#039;);
+			$(&#039;#show-results-as&#039;).val(&#039;posts&#039;);
+			// clearing dom removes all event handlers, reinitialize
+			userFilterDropdown($(&#039;[component=&quot;user/filter&quot;]&#039;), []);
+			tagFilterDropdown($(&#039;[component=&quot;tag/filter&quot;]&#039;), []);
+			categoryFilterDropdown([]);
+			alerts.success(&#039;[[search:search-preferences-cleared]]&#039;);
+			return false;
+		});
+	}
+
+
+	function categoryFilterDropdown(_selectedCids) {
+		ajaxify.data.allCategoriesUrl = &#039;&#039;;
+		selectedCids = _selectedCids || [];
+		const dropdownEl = $(&#039;[component=&quot;category/filter&quot;]&#039;);
+		categoryFilter.init(dropdownEl, {
+			selectedCids: _selectedCids,
+			updateButton: false, // prevent categoryFilter module from updating the button
+			onHidden: async function (data) {
+				const isActive = data.selectedCids.length &gt; 0 &amp;&amp; data.selectedCids[0] !== &#039;all&#039;;
+				let labelText = &#039;[[search:categories]]&#039;;
+				ajaxify.data.selectedCids = data.selectedCids;
+				selectedCids = data.selectedCids;
+				if (data.selectedCids.length === 1 &amp;&amp; data.selectedCids[0] === &#039;watched&#039;) {
+					ajaxify.data.selectedCategory = { cid: &#039;watched&#039; };
+					labelText = `[[search:categories-watched-categories]]`;
+				} else if (data.selectedCids.length === 1 &amp;&amp; data.selectedCids[0] === &#039;all&#039;) {
+					ajaxify.data.selectedCategory = null;
+				} else if (data.selectedCids.length &gt; 0) {
+					const categoryData = await api.get(`/categories/${data.selectedCids[0]}`);
+					ajaxify.data.selectedCategory = categoryData;
+					labelText = `[[search:categories-x, ${categoryData.name}]]`;
+				}
+				if (data.selectedCids.length &gt; 1) {
+					labelText = `[[search:categories-x, ${data.selectedCids.length}]]`;
+				}
+
+				$(&#039;[component=&quot;category/filter/button&quot;]&#039;).toggleClass(
+					&#039;active-filter&#039;, isActive
+				).find(&#039;.filter-label&#039;).translateText(labelText);
+			},
+			localCategories: [
+				{
+					cid: &#039;watched&#039;,
+					name: &#039;[[category:watched-categories]]&#039;,
+					icon: &#039;&#039;,
+				},
+			],
+		});
+	}
+
+	function userFilterDropdown(el, _selectedUsers) {
+		selectedUsers = _selectedUsers || [];
+		userFilter.init(el, {
+			selectedUsers: _selectedUsers,
+			template: &#039;partials/search-filters&#039;,
+			onSelect: function (_selectedUsers) {
+				selectedUsers = _selectedUsers;
+			},
+			onHidden: function (_selectedUsers) {
+				const isActive = _selectedUsers.length &gt; 0;
+				let labelText = &#039;[[search:posted-by]]&#039;;
+				if (isActive) {
+					labelText = translator.compile(
+						&#039;search:posted-by-usernames&#039;, selectedUsers.map(u =&gt; u.username).join(&#039;, &#039;)
+					);
+				}
+				el.find(&#039;[component=&quot;user/filter/button&quot;]&#039;).toggleClass(
+					&#039;active-filter&#039;, isActive
+				).find(&#039;.filter-label&#039;).translateText(labelText);
+			},
+		});
+	}
+
+	function tagFilterDropdown(el, _selectedTags) {
+		selectedTags = _selectedTags;
+		async function renderSelectedTags() {
+			const html = await app.parseAndTranslate(&#039;partials/search-filters&#039;, &#039;tagFilterSelected&#039;, {
+				tagFilterSelected: selectedTags,
+			});
+			el.find(&#039;[component=&quot;tag/filter/selected&quot;]&#039;).html(html);
+		}
+		function tagValueToObject(value) {
+			const escapedTag = utils.escapeHTML(value);
+			return {
+				value: value,
+				valueEscaped: escapedTag,
+				valueEncoded: encodeURIComponent(escapedTag),
+				class: escapedTag.replace(/\s/g, &#039;-&#039;),
+			};
+		}
+
+		async function doSearch() {
+			let result = { tags: [] };
+			const query = el.find(&#039;[component=&quot;tag/filter/search&quot;]&#039;).val();
+			if (query &amp;&amp; query.length &gt; 1) {
+				if (app.user.privileges[&#039;search:tags&#039;]) {
+					result = await socket.emit(&#039;topics.searchAndLoadTags&#039;, { query: query });
+				} else {
+					result = {
+						tags: [tagValueToObject(query)],
+					};
+				}
+			}
+
+			if (!result.tags.length) {
+				el.find(&#039;[component=&quot;tag/filter/results&quot;]&#039;).translateHtml(
+					&#039;[[tags:no-tags-found]]&#039;
+				);
+				return;
+			}
+			result.tags = result.tags.slice(0, 20);
+			const tagMap = {};
+			result.tags.forEach((tag) =&gt; {
+				tagMap[tag.valueEscaped] = tag;
+			});
+
+			const html = await app.parseAndTranslate(&#039;partials/search-filters&#039;, &#039;tagFilterResults&#039;, {
+				tagFilterResults: result.tags,
+			});
+			el.find(&#039;[component=&quot;tag/filter/results&quot;]&#039;).html(html);
+			el.find(&#039;[component=&quot;tag/filter/results&quot;] [data-tag]&#039;).on(&#039;click&#039;, async function () {
+				selectedTags.push(tagMap[$(this).attr(&#039;data-tag&#039;)]);
+				renderSelectedTags();
+			});
+		}
+
+		el.find(&#039;[component=&quot;tag/filter/search&quot;]&#039;).on(&#039;keyup&#039;, utils.debounce(function () {
+			if (app.user.privileges[&#039;search:tags&#039;]) {
+				doSearch();
+			}
+		}, 1000));
+
+		el.on(&#039;click&#039;, &#039;[component=&quot;tag/filter/delete&quot;]&#039;, function () {
+			const deleteTag = $(this).attr(&#039;data-tag&#039;);
+			selectedTags = selectedTags.filter(tag =&gt; tag.valueEscaped !== deleteTag);
+			renderSelectedTags();
+		});
+
+		el.find(&#039;[component=&quot;tag/filter/search&quot;]&#039;).on(&#039;keyup&#039;, (e) =&gt; {
+			if (e.key === &#039;Enter&#039; &amp;&amp; !app.user.privileges[&#039;search:tags&#039;]) {
+				const value = el.find(&#039;[component=&quot;tag/filter/search&quot;]&#039;).val();
+				if (value &amp;&amp; selectedTags.every(tag =&gt; tag.value !== value)) {
+					selectedTags.push(tagValueToObject(value));
+					renderSelectedTags();
+				}
+				el.find(&#039;[component=&quot;tag/filter/search&quot;]&#039;).val(&#039;&#039;);
+			}
+		});
+
+		el.on(&#039;shown.bs.dropdown&#039;, function () {
+			el.find(&#039;[component=&quot;tag/filter/search&quot;]&#039;).trigger(&#039;focus&#039;);
+		});
+	}
+
+	return Search;
+});</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ cyclomatic }} <br>
+    Length : {{ halstead.length }} <br>
+    Difficulty : {{ halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

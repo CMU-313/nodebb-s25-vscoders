@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - public/src/admin/admin.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>public/src/admin/admin.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">76.50</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">204</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">21.61</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">1.70</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">&#039;use strict&#039;;
+
+require(&#039;../app&#039;);
+
+// scripts-admin.js is generated during build, it contains javascript files
+// from plugins that add files to &quot;acpScripts&quot; block in plugin.json
+// eslint-disable-next-line
+require(&#039;../../scripts-admin&#039;);
+
+app.onDomReady();
+
+(function () {
+	let logoutTimer = 0;
+	let logoutMessage;
+	function startLogoutTimer() {
+		if (app.config.adminReloginDuration &lt;= 0) {
+			return;
+		}
+		if (logoutTimer) {
+			clearTimeout(logoutTimer);
+		}
+		// pre-translate language string gh#9046
+		if (!logoutMessage) {
+			require([&#039;translator&#039;], function (translator) {
+				translator.translate(&#039;[[login:logged-out-due-to-inactivity]]&#039;, function (translated) {
+					logoutMessage = translated;
+				});
+			});
+		}
+
+		logoutTimer = setTimeout(function () {
+			require([&#039;bootbox&#039;], function (bootbox) {
+				bootbox.alert({
+					closeButton: false,
+					message: logoutMessage,
+					callback: function () {
+						window.location.reload();
+					},
+				});
+			});
+		}, 3600000);
+	}
+
+	require([&#039;hooks&#039;, &#039;admin/settings&#039;], (hooks, Settings) =&gt; {
+		hooks.on(&#039;action:ajaxify.end&#039;, (data) =&gt; {
+			updatePageTitle(data.url);
+			setupRestartLinks();
+			showCorrectNavTab();
+			startLogoutTimer();
+
+			$(&#039;[data-bs-toggle=&quot;tooltip&quot;]&#039;).tooltip({
+				animation: false,
+				container: &#039;#content&#039;,
+			});
+
+			if ($(&#039;.settings&#039;).length) {
+				Settings.prepare();
+			}
+			if ($(&#039;[component=&quot;settings/toc&quot;]&#039;).length) {
+				Settings.populateTOC();
+			}
+		});
+		hooks.on(&#039;action:ajaxify.start&#039;, function () {
+			require([&#039;bootstrap&#039;], function (boostrap) {
+				const offcanvas = boostrap.Offcanvas.getInstance(&#039;#offcanvas&#039;);
+				if (offcanvas) {
+					offcanvas.hide();
+				}
+			});
+		});
+	});
+
+	function showCorrectNavTab() {
+		const accordionEl = $(&#039;[component=&quot;acp/accordion&quot;]&#039;);
+		let pathname = window.location.pathname;
+		if (pathname === &#039;/admin&#039;) {
+			pathname = &#039;/admin/dashboard&#039;;
+		}
+		const selectedButton = accordionEl.find(`a[href=&quot;${pathname}&quot;]`);
+		if (selectedButton.length) {
+			accordionEl.find(&#039;a&#039;).removeClass(&#039;active&#039;);
+			accordionEl.find(&#039;.accordion-collapse&#039;).removeClass(&#039;show&#039;);
+			selectedButton.addClass(&#039;active&#039;);
+			selectedButton.parents(&#039;.accordion-collapse&#039;).addClass(&#039;show&#039;);
+		}
+	}
+
+	$(document).ready(function () {
+		require([&#039;admin/modules/search&#039;], function (search) {
+			search.init();
+		});
+
+		$(&#039;[component=&quot;logout&quot;]&#039;).on(&#039;click&#039;, function () {
+			require([&#039;logout&#039;], function (logout) {
+				logout();
+			});
+			return false;
+		});
+
+		setupNProgress();
+		fixAccordionIds();
+	});
+
+	function fixAccordionIds() {
+		// fix mobile accordion, so it doesn&#039;t have same ids as desktop
+		// the same accordion partial is used in both places
+		const offcanvasAccordion = $(&#039;#offcanvas #accordionACP&#039;);
+		offcanvasAccordion.attr(&#039;id&#039;, &#039;accordionACP-offcanvas&#039;);
+		offcanvasAccordion.find(&#039;[data-bs-target]&#039;).each((i, el) =&gt; {
+			$(el).attr(&#039;data-bs-target&#039;, $(el).attr(&#039;data-bs-target&#039;) + &#039;-offcanvas&#039;);
+		});
+		offcanvasAccordion.find(&#039;[data-bs-parent]&#039;).each((i, el) =&gt; {
+			$(el).attr(&#039;data-bs-parent&#039;, &#039;#accordionACP-offcanvas&#039;);
+		});
+		offcanvasAccordion.find(&#039;.accordion-collapse&#039;).each((i, el) =&gt; {
+			$(el).attr(&#039;id&#039;, $(el).attr(&#039;id&#039;) + &#039;-offcanvas&#039;);
+		});
+	}
+
+	function setupNProgress() {
+		require([&#039;nprogress&#039;, &#039;hooks&#039;], function (NProgress, hooks) {
+			$(window).on(&#039;action:ajaxify.start&#039;, function () {
+				NProgress.set(0.7);
+			});
+
+			hooks.on(&#039;action:ajaxify.end&#039;, function () {
+				NProgress.done();
+			});
+		});
+	}
+
+	function updatePageTitle(url) {
+		require([&#039;translator&#039;], function (translator) {
+			url = url
+				.replace(/\/\d+$/, &#039;&#039;)
+				.split(&#039;/&#039;).slice(0, 3).join(&#039;/&#039;)
+				.split(/[?#]/)[0].replace(/(\/+$)|(^\/+)/, &#039;&#039;);
+
+			// If index is requested, load the dashboard
+			if (url === &#039;admin&#039;) {
+				url = &#039;admin/dashboard&#039;;
+			}
+
+			url = [config.relative_path, url].join(&#039;/&#039;);
+			let fallback;
+
+			$(`[component=&quot;acp/accordion&quot;] a[href=&quot;${url}&quot;]`).each(function () {
+				fallback = $(this).text();
+			});
+
+			let mainTitle;
+			let pageTitle;
+			if (/admin\/plugins\//.test(url)) {
+				mainTitle = fallback;
+				pageTitle = &#039;[[admin/menu:section-plugins]] &gt; &#039; + mainTitle;
+			} else {
+				const matches = url.match(/admin\/(.+?)\/(.+?)$/);
+				if (matches) {
+					mainTitle = &#039;[[admin/menu:&#039; + matches[1] + &#039;/&#039; + matches[2] + &#039;]]&#039;;
+					pageTitle = &#039;[[admin/menu:section-&#039; +
+						(matches[1] === &#039;development&#039; ? &#039;advanced&#039; : matches[1]) +
+						&#039;]]&#039; + (matches[2] ? (&#039; &gt; &#039; + mainTitle) : &#039;&#039;);
+					if (matches[2] === &#039;settings&#039;) {
+						mainTitle = translator.compile(&#039;admin/menu:settings.page-title&#039;, mainTitle);
+					}
+				} else {
+					mainTitle = &#039;[[admin/menu:section-dashboard]]&#039;;
+					pageTitle = &#039;[[admin/menu:section-dashboard]]&#039;;
+				}
+			}
+
+			pageTitle = translator.compile(&#039;admin/admin:acp-title&#039;, pageTitle);
+
+			translator.translate(pageTitle, function (title) {
+				document.title = title.replace(/&amp;gt;/g, &#039;&gt;&#039;);
+			});
+		});
+	}
+
+	function setupRestartLinks() {
+		require([&#039;benchpress&#039;, &#039;bootbox&#039;, &#039;admin/modules/instance&#039;], function (benchpress, bootbox, instance) {
+			// need to preload the compiled alert template
+			// otherwise it can be unloaded when rebuild &amp; restart is run
+			// the client can&#039;t fetch the template file, resulting in an error
+			benchpress.render(&#039;partials/toast&#039;, {}).then(function () {
+				$(&#039;[component=&quot;rebuild-and-restart&quot;]&#039;).off(&#039;click&#039;).on(&#039;click&#039;, function () {
+					bootbox.confirm(&#039;[[admin/admin:alert.confirm-rebuild-and-restart]]&#039;, function (confirm) {
+						if (confirm) {
+							instance.rebuildAndRestart();
+						}
+					});
+				});
+
+				$(&#039;[component=&quot;restart&quot;]&#039;).off(&#039;click&#039;).on(&#039;click&#039;, function () {
+					bootbox.confirm(&#039;[[admin/admin:alert.confirm-restart]]&#039;, function (confirm) {
+						if (confirm) {
+							instance.restart();
+						}
+					});
+				});
+			});
+		});
+	}
+}());</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ cyclomatic }} <br>
+    Length : {{ halstead.length }} <br>
+    Difficulty : {{ halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

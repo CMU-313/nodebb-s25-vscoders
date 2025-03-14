@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - public/src/client/chats/manage.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>public/src/client/chats/manage.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">72.66</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">140</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">23.08</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">1.53</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">&#039;use strict&#039;;
+
+
+define(&#039;forum/chats/manage&#039;, [
+	&#039;api&#039;, &#039;alerts&#039;, &#039;translator&#039;, &#039;autocomplete&#039;, &#039;forum/chats/user-list&#039;,
+], function (api, alerts, translator, autocomplete, userList) {
+	const manage = {};
+
+	manage.init = function (roomId, buttonEl) {
+		let modal;
+
+		buttonEl.on(&#039;click&#039;, async function () {
+			let groups = [];
+			if (app.user.isAdmin) {
+				({ groups } = await api.get(&#039;/admin/groups&#039;));
+				groups.sort((a, b) =&gt; b.system - a.system).map((g) =&gt; {
+					const { name, displayName } = g;
+					return { name, displayName };
+				});
+
+				if (Array.isArray(ajaxify.data.groups)) {
+					groups.forEach((g) =&gt; {
+						g.selected = ajaxify.data.groups.includes(g.name);
+					});
+				}
+			}
+
+			const html = await app.parseAndTranslate(&#039;modals/manage-room&#039;, {
+				groups,
+				user: app.user,
+				room: ajaxify.data,
+			});
+			modal = bootbox.dialog({
+				title: &#039;[[modules:chat.manage-room]]&#039;,
+				size: &#039;large&#039;,
+				message: html,
+				onEscape: true,
+			});
+
+			modal.attr(&#039;component&#039;, &#039;chat/manage-modal&#039;);
+
+			refreshParticipantsList(roomId, modal);
+			addKickHandler(roomId, modal);
+			addToggleOwnerHandler(roomId, modal);
+
+			const userListEl = modal.find(&#039;[component=&quot;chat/manage/user/list&quot;]&#039;);
+			const userListElSearch = modal.find(&#039;[component=&quot;chat/manage/user/list/search&quot;]&#039;);
+			userList.addSearchHandler(roomId, userListElSearch, async (data) =&gt; {
+				if (userListElSearch.val()) {
+					userListEl.html(await app.parseAndTranslate(&#039;partials/chats/manage-room-users&#039;, data));
+				} else {
+					refreshParticipantsList(roomId, modal);
+				}
+			});
+
+			userList.addInfiniteScrollHandler(roomId, userListEl, async (listEl, data) =&gt; {
+				listEl.append(await app.parseAndTranslate(&#039;partials/chats/manage-room-users&#039;, data));
+			});
+
+			const searchInput = modal.find(&#039;[component=&quot;chat/manage/user/add/search&quot;]&#039;);
+			const errorEl = modal.find(&#039;.text-danger&#039;);
+			autocomplete.user(searchInput, function (event, selected) {
+				errorEl.text(&#039;&#039;);
+				api.post(`/chats/${roomId}/users`, {
+					uids: [selected.item.user.uid],
+				}).then((body) =&gt; {
+					refreshParticipantsList(roomId, modal, body);
+					searchInput.val(&#039;&#039;);
+				}).catch((err) =&gt; {
+					translator.translate(err.message, function (translated) {
+						errorEl.text(translated);
+					});
+				});
+			});
+
+			modal.find(&#039;[component=&quot;chat/manage/save&quot;]&#039;).on(&#039;click&#039;, () =&gt; {
+				const notifSettingEl = modal.find(&#039;[component=&quot;chat/room/notification/setting&quot;]&#039;);
+				api.put(`/chats/${roomId}`, {
+					groups: modal.find(&#039;[component=&quot;chat/room/groups&quot;]&#039;).val(),
+					notificationSetting: notifSettingEl.val(),
+				}).then((payload) =&gt; {
+					ajaxify.data.groups = payload.groups;
+					ajaxify.data.notificationSetting = payload.notificationSetting;
+					const roomDefaultOption = payload.notificationOptions[0];
+					$(&#039;[component=&quot;chat/notification/setting&quot;] [data-icon]&#039;).first().attr(
+						&#039;data-icon&#039;, roomDefaultOption.icon
+					);
+					$(&#039;[component=&quot;chat/notification/setting/sub-label&quot;]&#039;).translateText(
+						roomDefaultOption.subLabel
+					);
+					if (roomDefaultOption.selected) {
+						$(&#039;[component=&quot;chat/notification/setting/icon&quot;]&#039;).attr(
+							&#039;class&#039;, `fa ${roomDefaultOption.icon}`
+						);
+					}
+
+					modal.modal(&#039;hide&#039;);
+				}).catch(alerts.error);
+			});
+		});
+	};
+
+	function addKickHandler(roomId, modal) {
+		modal.on(&#039;click&#039;, &#039;[data-action=&quot;kick&quot;]&#039;, function () {
+			const uid = parseInt(this.getAttribute(&#039;data-uid&#039;), 10);
+
+			api.del(`/chats/${roomId}/users/${uid}`, {}).then((body) =&gt; {
+				refreshParticipantsList(roomId, modal, body);
+			}).catch(alerts.error);
+		});
+	}
+
+	function addToggleOwnerHandler(roomId, modal) {
+		modal.on(&#039;click&#039;, &#039;[data-action=&quot;toggleOwner&quot;]&#039;, async function () {
+			const uid = parseInt(this.getAttribute(&#039;data-uid&#039;), 10);
+			const iconEl = modal.get(0).querySelector(`[component=&quot;chat/manage/user/list&quot;] &gt; [data-uid=&quot;${uid}&quot;] [component=&quot;chat/manage/user/owner/icon&quot;]`);
+			const current = !iconEl.classList.contains(&#039;hidden&#039;);
+
+			await api[current ? &#039;del&#039; : &#039;put&#039;](`/chats/${roomId}/owners/${uid}`);
+			iconEl.classList.toggle(&#039;hidden&#039;);
+		});
+	}
+
+	async function refreshParticipantsList(roomId, modal, data) {
+		const listEl = modal.find(&#039;[component=&quot;chat/manage/user/list&quot;]&#039;);
+
+		if (!data) {
+			try {
+				data = await api.get(`/chats/${roomId}/users`, {});
+			} catch (err) {
+				listEl.find(&#039;li&#039;).text(await translator.translate(&#039;[[error:invalid-data]]&#039;));
+			}
+		}
+		listEl.find(&#039;[data-bs-toggle=&quot;tooltip&quot;]&#039;).tooltip(&#039;dispose&#039;);
+		listEl.html(await app.parseAndTranslate(&#039;partials/chats/manage-room-users&#039;, data));
+		listEl.find(&#039;[data-bs-toggle=&quot;tooltip&quot;]&#039;).tooltip();
+	}
+
+	return manage;
+});</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ cyclomatic }} <br>
+    Length : {{ halstead.length }} <br>
+    Difficulty : {{ halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>

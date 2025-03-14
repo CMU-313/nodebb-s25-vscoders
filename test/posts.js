@@ -182,7 +182,9 @@ describe('Post\'s', () => {
 			const data = await posts.hasVoted(postData.pid, voterUid);
 			assert.equal(data.upvoted, true);
 			assert.equal(data.downvoted, false);
+			
 		});
+
 
 		it('should add the pid to the :votes sorted set for that user', async () => {
 			const cid = await posts.getCidByPid(postData.pid);
@@ -229,6 +231,7 @@ describe('Post\'s', () => {
 			const data = await posts.hasVoted(postData.pid, voterUid);
 			assert.equal(data.upvoted, false);
 			assert.equal(data.downvoted, false);
+			await Groups.leave('administrators', 1);
 		});
 
 		it('should downvote a post', async () => {
