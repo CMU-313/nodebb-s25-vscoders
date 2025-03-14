@@ -190,18 +190,18 @@ module.exports = function (Posts) {
 			await db.sortedSetAdd(`uid:${uid}:downvote`, now, pid);
 		}
 		// If uid = admin, then add a tag that said admin endorsed.
-		if (uid === 1 && type === 'upvote' && !unvote) {
+		if (user.isAdministrator(uid) && type === 'upvote' && !unvote) {
 			let postContent = await Posts.getPostField(pid, 'content') || '';
 			postContent += '\n\n**✅ Admin endorsed this post**';
 			const editResult = await Posts.edit({
 				pid: pid,
 				content: postContent,
-				uid: 1,
+				uid: uid,
 			});
 			if (!editResult.post.deleted) {
 				websockets.in(`topic_${editResult.topic.tid}`).emit('event:post_edited', editResult);
 			}
-		} else if (uid === 1 && unvote) {
+		} else if (user.isAdministrator(uid) && unvote) {
 			let postContent = await Posts.getPostField(pid, 'content') || '';
 			const tag = '\n\n**✅ Admin endorsed this post**';
 			if (postContent.endsWith(tag)) {
@@ -209,7 +209,7 @@ module.exports = function (Posts) {
 				const editResult = await Posts.edit({
 					pid: pid,
 					content: postContent,
-					uid: 1,
+					uid: uid,
 				});
 				if (!editResult.post.deleted) {
 					websockets.in(`topic_${editResult.topic.tid}`).emit('event:post_edited', editResult);
