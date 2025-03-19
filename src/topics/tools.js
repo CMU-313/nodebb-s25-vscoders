@@ -268,6 +268,27 @@ module.exports = function (Topics) {
 		);
 	};
 
+	async function toggleAnonymous(tid, uid, anonymous) {
+		const topicData = await Topics.getTopicFields(tid, ['tid', 'uid', 'cid']);
+		if (!topicData || !topicData.cid) {
+		  throw new Error('[[error:no-topic]]');
+		}
+		const isAdminOrMod = await privileges.categories.isAdminOrMod(topicData.cid, uid);
+		if (!isAdminOrMod) {
+		  throw new Error('[[error:no-privileges]]');
+		}
+		await Topics.setTopicField(tid, 'anonymous', anonymous ? 1 : 0);
+		topicData.events = await Topics.events.log(tid, { type: anonymous ? 'make_anonymous' : 'make_not_anonymous', uid });
+		topicData.anonymous = anonymous;
+
+		plugins.hooks.fire('action:topic.anonymous', { topic: _.clone(topicData), uid: uid });
+		return topicData;
+	  }
+
+	topicTools.makeAnonymous = async function (tid, uid) {
+		return await toggleAnonymous(tid, uid, true);
+	};
+
 	topicTools.move = async function (tid, data) {
 		const cid = parseInt(data.cid, 10);
 		const topicData = await Topics.getTopicData(tid);

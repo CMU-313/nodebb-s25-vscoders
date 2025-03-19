@@ -197,6 +197,7 @@ define('pictureCropper', ['alerts'], function (alerts) {
 	}
 
 	function onSubmit(data, callback) {
+		console.log("came into onSubmit")
 		function showAlert(type, message) {
 			if (type === 'error') {
 				data.uploadModal.find('#fileUploadSubmitBtn').removeClass('disabled');

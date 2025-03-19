@@ -22,7 +22,30 @@ const relative_path = nconf.get('relative_path');
 const upload_url = nconf.get('upload_url');
 const validSorts = ['oldest_to_newest', 'newest_to_oldest', 'most_votes'];
 
+// topicsController.create = async function create(req, res) {
+// 	console.log("came into create function")
+//     try {
+//         const userId = req.user?.uid;
+//         const isAnonymous = req.body.anonymous === 'true'; // Capture anonymous checkbox
+
+// 		console.log("anonymous button was checked")
+//         // Process topic creation with or without user identity
+//         const topicData = {
+//             title: req.body.title,
+//             content: req.body.content,
+//             uid: isAnonymous ? null : userId, // Set UID to null for anonymous posts
+//         };
+
+//         const topicId = await topics.create(topicData);
+//         res.json({ tid: topicId });
+//     } catch (err) {
+//         res.status(500).json({ error: err.message });
+//     }
+// }
+
 topicsController.get = async function getTopic(req, res, next) {
+	console.log('came into topics.js from topics controller');
+
 	const tid = req.params.topic_id;
 	if (
 		(req.params.post_index && !utils.isNumber(req.params.post_index) && req.params.post_index !== 'unread') ||
@@ -35,6 +58,7 @@ topicsController.get = async function getTopic(req, res, next) {
 	if (!topicData) {
 		return next();
 	}
+
 	const [
 		userPrivileges,
 		settings,

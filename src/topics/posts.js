@@ -5,6 +5,7 @@ const _ = require('lodash');
 const validator = require('validator');
 const nconf = require('nconf');
 
+const crypto = require('crypto');
 const db = require('../database');
 const user = require('../user');
 const posts = require('../posts');
@@ -103,7 +104,22 @@ module.exports = function (Topics) {
 		}
 	}
 
-	Topics.addPostData = async function (postData, uid) {
+	function generateRandomUsername() {
+		return crypto.randomBytes(6).toString('hex'); // Generates a random string of 12 hex characters
+	}
+
+	function getUsername(postObj, postData, userData) {
+		if (postData.anonymous) {
+			console.log("Post is anonymous - generating random username");
+			return { username: generateRandomUsername(), displayname: generateRandomUsername() };
+		} else {
+			console.log("Post is NOT anonymous - using real username");
+			return postObj.uid ? userData[postObj.uid] : { ...userData[postObj.uid] };
+		}
+	}
+
+	Topics.addPostData = async function (postData, uid, isAnonymous) {
+		console.log('add post data');
 		if (!Array.isArray(postData) || !postData.length) {
 			return [];
 		}
@@ -129,9 +145,13 @@ module.exports = function (Topics) {
 			Topics.addParentPosts(postData),
 		]);
 
+		postData.anonymous = true;
+
 		postData.forEach((postObj, i) => {
 			if (postObj) {
-				postObj.user = postObj.uid ? userData[postObj.uid] : { ...userData[postObj.uid] };
+				// Check if post is marked as anonymous
+				
+				postObj.user = getUsername(postObj, postData, userData);
 				postObj.editor = postObj.editor ? editors[postObj.editor] : null;
 				postObj.bookmarked = bookmarks[i];
 				postObj.upvoted = voteData.upvotes[i];
@@ -141,10 +161,13 @@ module.exports = function (Topics) {
 				postObj.selfPost = parseInt(uid, 10) > 0 && parseInt(uid, 10) === postObj.uid;
 
 				// Username override for guests, if enabled
-				if (meta.config.allowGuestHandles && postObj.uid === 0 && postObj.handle) {
-					postObj.user.username = validator.escape(String(postObj.handle));
-					postObj.user.displayname = postObj.user.username;
-				}
+				// if (meta.config.allowGuestHandles && postObj.uid === 0 && postObj.handle) {
+				// 	postObj.user.username = validator.escape(String(postObj.handle));
+				// 	postObj.user.displayname = postObj.user.username;
+				// // }
+
+				postObj.user.username = generateRandomUsername();
+				postObj.user.displayname = generateRandomUsername();
 			}
 		});
 

@@ -17,6 +17,7 @@ const translator = require('../translator');
 
 module.exports = function (Topics) {
 	Topics.create = async function (data) {
+		console.log('created the topic');
 		// This is an internal method, consider using Topics.post instead
 		const timestamp = data.timestamp || Date.now();
 
@@ -24,7 +25,7 @@ module.exports = function (Topics) {
 
 		let topicData = {
 			tid: tid,
-			uid: data.uid,
+			uid: data.anonymous ? 0 : data.uid,
 			cid: data.cid,
 			mainPid: 0,
 			title: data.title,
@@ -33,6 +34,7 @@ module.exports = function (Topics) {
 			lastposttime: 0,
 			postcount: 0,
 			viewcount: 0,
+			anonymous: data.anonymous,
 		};
 
 		if (Array.isArray(data.tags) && data.tags.length) {
@@ -78,6 +80,7 @@ module.exports = function (Topics) {
 	};
 
 	Topics.post = async function (data) {
+		console.log('came into this functon Topics.post');
 		data = await plugins.hooks.fire('filter:topic.post', data);
 		const { uid } = data;
 
