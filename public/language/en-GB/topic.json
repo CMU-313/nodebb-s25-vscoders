@@ -53,6 +53,10 @@
 
 	"user-locked-topic-ago": "%1 locked this topic %2",
 	"user-locked-topic-on": "%1 locked this topic on %2",
+	"user-make-topic-private-ago": "%1 make this topic private %2",
+	"user-make-topic-private-on": "%1 make this topic private %2",
+	"user-make-topic-public-ago": "%1 make this topic public %2",
+	"user-make-topic-public-on": "%1 make this topic public %2",
 	"user-unlocked-topic-ago": "%1 unlocked this topic %2",
 	"user-unlocked-topic-on": "%1 unlocked this topic on %2",
 	"user-pinned-topic-ago": "%1 pinned this topic %2",
@@ -107,6 +111,8 @@
 	"ignoring.description": "Do not notify me of new replies.<br/>Do not show topic in unread.",
 
 	"thread-tools.title": "Topic Tools",
+	"thread-tools.makePublic": "Make Public",
+    "thread-tools.makePrivate": "Make Private",
 	"thread-tools.markAsUnreadForAll": "Mark Unread For All",
 	"thread-tools.pin": "Pin Topic",
 	"thread-tools.unpin": "Unpin Topic",

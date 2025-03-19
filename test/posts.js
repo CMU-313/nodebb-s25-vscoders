@@ -23,6 +23,7 @@ const meta = require('../src/meta');
 const file = require('../src/file');
 const helpers = require('./helpers');
 const utils = require('../src/utils');
+const Groups = require('../src/groups');
 const request = require('../src/request');
 
 describe('Post\'s', () => {
@@ -183,6 +184,27 @@ describe('Post\'s', () => {
 			}
 			assert.equal(err.message, '[[error:no-privileges]]');
 			await privileges.categories.give(['groups:posts:upvote', 'groups:posts:downvote'], cid, 'registered-users');
+		});
+
+		it('should add endorsement message', async () => {
+			const endorsingUid = 1;
+			await Groups.join('administrators', endorsingUid);
+			const result = await apiPosts.upvote({ uid: endorsingUid }, { pid: postData.pid, room_id: 'topic_1' });
+			assert.strictEqual(
+				result.post.content,
+				'The content of test topic\n\n**✅ Admin endorsed this post**',
+				'Post content should include the endorsement message for uid=1'
+			);
+		});
+
+		it('should delete endorsement message', async () => {
+			const endorsingUid = 1;
+			const result = await apiPosts.downvote({ uid: endorsingUid }, { pid: postData.pid, room_id: 'topic_1' });
+			assert.strictEqual(
+				result.post.content,
+				'The content of test topic',
+				'Post content should include the endorsement message for uid=1'
+			);
 		});
 
 		it('should upvote a post', async () => {

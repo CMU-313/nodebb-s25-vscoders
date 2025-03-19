@@ -23,6 +23,12 @@ module.exports = function (Topics) {
 		return await toggleDelete(tid, uid, false);
 	};
 
+	function validateData(canDelete, isDelete, canRestore) {
+		if ((!canDelete && isDelete) || (!canRestore && !isDelete)) {
+			throw new Error('[[error:no-privileges]]');
+		}
+	}
+
 	async function toggleDelete(tid, uid, isDelete) {
 		const topicData = await Topics.getTopicData(tid);
 		if (!topicData) {
@@ -37,9 +43,8 @@ module.exports = function (Topics) {
 		const hook = isDelete ? 'delete' : 'restore';
 		const data = await plugins.hooks.fire(`filter:topic.${hook}`, { topicData: topicData, uid: uid, isDelete: isDelete, canDelete: canDelete, canRestore: canDelete });
 
-		if ((!data.canDelete && data.isDelete) || (!data.canRestore && !data.isDelete)) {
-			throw new Error('[[error:no-privileges]]');
-		}
+		validateData(data.canDelete, data.isDelete, data.canRestore);
+
 		if (data.topicData.deleted && data.isDelete) {
 			throw new Error('[[error:topic-already-deleted]]');
 		} else if (!data.topicData.deleted && !data.isDelete) {
@@ -109,6 +114,37 @@ module.exports = function (Topics) {
 		plugins.hooks.fire('action:topic.lock', { topic: _.clone(topicData), uid: uid });
 		return topicData;
 	}
+
+	topicTools.makePrivate = async function (tid, uid) {
+		return await togglePrivate(tid, uid, true);
+	};
+
+	topicTools.makePublic = async function (tid, uid) {
+		return await togglePrivate(tid, uid, false);
+	};
+
+	async function togglePrivate(tid, uid, isPrivate) {
+		const topicData = await Topics.getTopicFields(tid, ['tid', 'uid', 'cid', 'private']);
+		if (!topicData) {
+			throw new Error('[[error:no-topic]]');
+		}
+
+		const isAdminOrMod = await privileges.categories.isAdminOrMod(topicData.cid, uid);
+		const isOwner = parseInt(topicData.uid, 10) === parseInt(uid, 10);
+
+		if (!isOwner && !isAdminOrMod) {
+			throw new Error('[[error:no-privileges]]');
+		}
+		await Topics.setTopicField(tid, 'private', isPrivate ? 1 : 0);
+		topicData.events = await Topics.events.log(tid, {
+			type: isPrivate ? 'makePrivate' : 'makePublic',
+			uid: uid,
+		});
+
+		topicData.private = isPrivate ? 1 : 0;
+		return topicData;
+	}
+
 
 	topicTools.pin = async function (tid, uid) {
 		return await togglePin(tid, uid, true);
