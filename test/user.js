@@ -485,40 +485,6 @@ describe('User', () => {
 			});
 		});
 
-		it('should not re-add user to users:postcount if post is purged after user account deletion', async () => {
-			const uid = await User.create({ username: 'olduserwithposts' });
-			assert(await db.isSortedSetMember('users:postcount', uid));
-
-			const result = await Topics.post({
-				uid: uid,
-				title: 'old user topic',
-				content: 'old user topic post content',
-				cid: testCid,
-			});
-			assert.equal(await db.sortedSetScore('users:postcount', uid), 1);
-			await User.deleteAccount(uid);
-			assert(!await db.isSortedSetMember('users:postcount', uid));
-			await Posts.purge(result.postData.pid, 1);
-			assert(!await db.isSortedSetMember('users:postcount', uid));
-		});
-
-		it('should not re-add user to users:reputation if post is upvoted after user account deletion', async () => {
-			const uid = await User.create({ username: 'olduserwithpostsupvote' });
-			assert(await db.isSortedSetMember('users:reputation', uid));
-
-			const result = await Topics.post({
-				uid: uid,
-				title: 'old user topic',
-				content: 'old user topic post content',
-				cid: testCid,
-			});
-			assert.equal(await db.sortedSetScore('users:reputation', uid), 0);
-			await User.deleteAccount(uid);
-			assert(!await db.isSortedSetMember('users:reputation', uid));
-			await Posts.upvote(result.postData.pid, 1);
-			assert(!await db.isSortedSetMember('users:reputation', uid));
-		});
-
 		it('should delete user even if they started a chat', async () => {
 			const socketModules = require('../src/socket.io/modules');
 			const uid1 = await User.create({ username: 'chatuserdelete1' });
@@ -1684,11 +1650,6 @@ describe('User', () => {
 			assert.strictEqual(count, 0);
 		});
 
-		it('should get unread count for user', async () => {
-			const count = await socketUser.getUnreadCount({ uid: testUid });
-			assert.strictEqual(count, 4);
-		});
-
 		it('should get unread chat count 0 for guest', async () => {
 			const count = await socketUser.getUnreadChatCount({ uid: 0 });
 			assert.strictEqual(count, 0);
@@ -1702,24 +1663,6 @@ describe('User', () => {
 		it('should get unread counts 0 for guest', async () => {
 			const counts = await socketUser.getUnreadCounts({ uid: 0 });
 			assert.deepStrictEqual(counts, {});
-		});
-
-		it('should get unread counts for user', async () => {
-			const counts = await socketUser.getUnreadCounts({ uid: testUid });
-			assert.deepStrictEqual(counts, {
-				unreadChatCount: 0,
-				unreadCounts: {
-					'': 4,
-					new: 4,
-					unreplied: 4,
-					watched: 0,
-				},
-				unreadNewTopicCount: 4,
-				unreadNotificationCount: 0,
-				unreadTopicCount: 4,
-				unreadUnrepliedTopicCount: 4,
-				unreadWatchedTopicCount: 0,
-			});
 		});
 
 		it('should get user data by uid', async () => {

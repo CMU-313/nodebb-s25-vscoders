@@ -37,11 +37,9 @@ privsTopics.get = async function (tid, uid) {
 	const mayReply = privsTopics.canViewDeletedScheduled(topicData, {}, false, privData['topics:schedule']);
 
 	const privateVal = topicData.private ? parseInt(topicData.private, 10) : 0;
-	let canRead = true;
+	let canRead = privData['topics:read'] || isAdministrator;
 	if (privateVal === 1) {
-		if (!isOwner && !isAdminOrMod) {
-			canRead = false;
-		}
+		canRead = isOwner || isAdminOrMod;
 	}
 
 	return await plugins.hooks.fire('filter:privileges.topics.get', {

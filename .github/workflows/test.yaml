@@ -88,3 +88,9 @@ jobs:
 
       - name: Test coverage
         uses: coverallsapp/github-action@v2
+
+      - name: Run Artillery Load Test
+      - run: ./nodebb build
+      - run: ./nodebb start
+      - run: npx artillery run artillery-config.yml
+      - run: ./nodebb stop
