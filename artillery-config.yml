@@ -1,0 +1,45 @@
+config:
+  target: "http://localhost:4567"
+  phases:
+    - duration: 30
+      arrivalRate: 20   # 20 users per second
+  http:
+    timeout: 10       # Set request timeout
+    headers:
+      Content-Type: "application/json"
+
+scenarios:
+  - name: "Visit Homepage"
+    flow:
+      - get:
+          url: "/"
+
+  - name: "Visit Categories"
+    flow:
+      - get:
+          url: "http://localhost:4567/categories"
+      - think: 1
+
+  - name: "Visit Announcements"
+    flow:
+      - post:
+          url: "http://localhost:4567/category/1/announcements"
+      - think: 2
+
+  - name: "Visit General Discussion"
+    flow:
+      - get:
+          url: "http://localhost:4567/category/2/general-discussion"
+      - think: 1
+
+  - name: "Visit Blogs"
+    flow:
+      - get:
+          url: "http://localhost:4567/category/3/blogs"
+      - think: 1
+
+  - name: "Visit Comments & Feedback"
+    flow:
+      - get:
+          url: "http://localhost:4567/category/4/comments-feedback"
+      - think: 1
