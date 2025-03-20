@@ -90,7 +90,8 @@ jobs:
         uses: coverallsapp/github-action@v2
 
       - name: Run Artillery Load Test
-        run: ./nodebb build
-        run: ./nodebb start
-        run: npx artillery run artillery-config.yml
-        run: ./nodebb stop
+        run: |
+            ./nodebb build
+            ./nodebb start
+            npx artillery run artillery-config.yml
+            ./nodebb stop
