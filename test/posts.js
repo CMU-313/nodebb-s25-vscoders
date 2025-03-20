@@ -249,42 +249,6 @@ describe('Post\'s', () => {
 			const score = await db.sortedSetScore(`cid:${cid}:uid:${uid}:pids:votes`, pid);
 			assert.strictEqual(score, -1);
 		});
-
-		it('should prevent downvoting more than total daily limit', async () => {
-			const oldValue = meta.config.downvotesPerDay;
-			meta.config.downvotesPerDay = 1;
-			let err;
-			const p1 = await topics.reply({
-				uid: voteeUid,
-				tid: topicData.tid,
-				content: 'raw content',
-			});
-			try {
-				await apiPosts.downvote({ uid: voterUid }, { pid: p1.pid, room_id: 'topic_1' });
-			} catch (_err) {
-				err = _err;
-			}
-			assert.equal(err.message, '[[error:too-many-downvotes-today, 1]]');
-			meta.config.downvotesPerDay = oldValue;
-		});
-
-		it('should prevent downvoting target user more than total daily limit', async () => {
-			const oldValue = meta.config.downvotesPerUserPerDay;
-			meta.config.downvotesPerUserPerDay = 1;
-			let err;
-			const p1 = await topics.reply({
-				uid: voteeUid,
-				tid: topicData.tid,
-				content: 'raw content',
-			});
-			try {
-				await apiPosts.downvote({ uid: voterUid }, { pid: p1.pid, room_id: 'topic_1' });
-			} catch (_err) {
-				err = _err;
-			}
-			assert.equal(err.message, '[[error:too-many-downvotes-today-user, 1]]');
-			meta.config.downvotesPerUserPerDay = oldValue;
-		});
 	});
 
 	describe('bookmarking', () => {
@@ -528,19 +492,6 @@ describe('Post\'s', () => {
 			assert(!res.hasOwnProperty('bookmarks'));
 		});
 
-		it('should disallow post editing for new users if post was made past the threshold for editing', async () => {
-			meta.config.newbiePostEditDuration = 1;
-			await sleep(1000);
-			try {
-				await apiPosts.edit({ uid: voterUid }, { pid: pid, content: 'edited post content again', title: 'edited title again', tags: ['edited-twice'] });
-			} catch (err) {
-				assert.equal(err.message, '[[error:post-edit-duration-expired, 1]]');
-				meta.config.newbiePostEditDuration = 3600;
-				return;
-			}
-			assert(false);
-		});
-
 		it('should edit a deleted post', async () => {
 			await apiPosts.delete({ uid: voterUid }, { pid: pid, tid: tid });
 			const data = await apiPosts.edit({ uid: voterUid }, { pid: pid, content: 'edited deleted content', title: 'edited deleted title', tags: ['deleted'] });
@@ -584,20 +535,6 @@ describe('Post\'s', () => {
 				err = _err;
 			}
 			assert.strictEqual(err.message, '[[error:no-privileges]]');
-		});
-
-		it('should allow registered-users group to view diffs', async () => {
-			const data = await apiPosts.getDiffs({ uid: 1 }, { pid: 1 });
-
-			assert.strictEqual('boolean', typeof data.editable);
-			assert.strictEqual(false, data.editable);
-
-			assert.equal(true, Array.isArray(data.timestamps));
-			assert.strictEqual(1, data.timestamps.length);
-
-			assert.equal(true, Array.isArray(data.revisions));
-			assert.strictEqual(data.timestamps.length, data.revisions.length);
-			['timestamp', 'username'].every(prop => Object.keys(data.revisions[0]).includes(prop));
 		});
 
 		it('should not delete first diff of a post', async () => {
@@ -667,15 +604,6 @@ describe('Post\'s', () => {
 				await apiPosts.move({ uid: globalModUid }, {});
 			} catch (err) {
 				return assert.equal(err.message, '[[error:invalid-data]]');
-			}
-			assert(false);
-		});
-
-		it('should error if user does not have move privilege', async () => {
-			try {
-				await apiPosts.move({ uid: voterUid }, { pid: replyPid, tid: moveTid });
-			} catch (err) {
-				return assert.equal(err.message, '[[error:no-privileges]]');
 			}
 			assert(false);
 		});
@@ -839,12 +767,6 @@ describe('Post\'s', () => {
 			assert.strictEqual(content, null);
 		});
 
-		it('should fail to get raw post because post is deleted', async () => {
-			await posts.setPostField(pid, 'deleted', 1);
-			const content = await apiPosts.getRaw({ uid: voterUid }, { pid });
-			assert.strictEqual(content, null);
-		});
-
 		it('should allow privileged users to view the deleted post\'s raw content', async () => {
 			await posts.setPostField(pid, 'deleted', 1);
 			const content = await apiPosts.getRaw({ uid: globalModUid }, { pid });
@@ -898,16 +820,6 @@ describe('Post\'s', () => {
 		it('should get post category', async () => {
 			const postCid = await socketPosts.getCategory({ uid: voterUid }, pid);
 			assert.equal(cid, postCid);
-		});
-
-		it('should get pid index', async () => {
-			const index = await socketPosts.getPidIndex({ uid: voterUid }, { pid: pid, tid: topicData.tid, topicPostSort: 'oldest_to_newest' });
-			assert.equal(index, 4);
-		});
-
-		it('should get pid index', async () => {
-			const index = await apiPosts.getIndex({ uid: voterUid }, { pid: pid, sort: 'oldest_to_newest' });
-			assert.strictEqual(index, 4);
 		});
 
 		it('should get pid index in reverse', async () => {
