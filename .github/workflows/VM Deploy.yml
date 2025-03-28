@@ -31,6 +31,6 @@ jobs:
           password: ${{ secrets.ADMIN_PASSWORD }}
           script: | 
             cd code/${{ secrets.REPO_NAME }}
-            npm install ./nodebb-theme-harmony
+            git pull origin main
             docker compose down
             docker compose --profile redis up --build -d
