@@ -49,7 +49,7 @@ jobs:
         run: echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> $GITHUB_ENV
 
       - name: Start Translator with Docker Compose
-        run: docker compose up -d translator
+        run: docker compose --profile redis up --build -d
           
       - name: Install Node
         uses: actions/setup-node@v4
