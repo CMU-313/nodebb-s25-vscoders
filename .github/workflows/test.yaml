@@ -50,12 +50,6 @@ jobs:
 
       - name: Start Translator with Docker Compose
         run: docker compose up -d translator
-
-      - name: Wait for Translator to be Ready
-        run: |
-          echo "Waiting for translator to be ready..."
-          sleep 5
-          curl --retry 5 --retry-delay 2 http://localhost:5000/?content=test
           
       - name: Install Node
         uses: actions/setup-node@v4
