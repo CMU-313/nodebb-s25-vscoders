@@ -41,16 +41,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - run: cp install/package.json package.json
-
-      - name: Debug API Key
-        run: |
-          echo "Key starts with:" $(echo "$OPENAI_API_KEY")
-      - name: Export OPENAI_API_KEY to GITHUB_ENV
-        run: echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> $GITHUB_ENV
-
-      - name: Start Translator with Docker Compose
-        run: docker compose --profile redis up --build -d
-          
+      
       - name: Install Node
         uses: actions/setup-node@v4
         with:
