@@ -29,9 +29,8 @@ jobs:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_ADMIN }}
           password: ${{ secrets.ADMIN_PASSWORD }}
-          script: |
+          script: | 
             cd code/${{ secrets.REPO_NAME }}
             git pull origin main
             docker compose down
-            OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} docker compose --profile redis up --build -d
-
+            docker compose --profile redis up --build -d
