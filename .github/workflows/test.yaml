@@ -22,6 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TEST_ENV: 'production'
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
     services:
       redis:
