@@ -31,6 +31,7 @@ jobs:
           password: ${{ secrets.ADMIN_PASSWORD }}
           script: | 
             cd code/${{ secrets.REPO_NAME }}
+            echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" > .env
             git pull origin main
             docker compose down
             docker compose --profile redis up --build -d
