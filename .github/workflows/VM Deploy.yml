@@ -33,5 +33,4 @@ jobs:
             cd code/${{ secrets.REPO_NAME }}
             git pull origin main
             docker compose down
-            OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
-            docker compose --profile redis up --build -d
+            OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} docker compose --profile redis up --build -d
