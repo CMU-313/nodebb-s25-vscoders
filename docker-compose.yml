@@ -10,7 +10,7 @@ services:
       environment:
         FLASK_APP: app.py 
         FLASK_ENV: development 
-        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        OPENAI_API_KEY: ${OPENAI_API_KEY}
       volumes:
         - ./translator-service:/app
       working_dir: /app
