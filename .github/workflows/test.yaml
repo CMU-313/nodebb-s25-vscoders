@@ -27,6 +27,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - run: cp install/package.json package.json
+  
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+  
+      - name: NPM Install
+        uses: bahmutov/npm-install@v1
+        with:
+          useLockFile: false
+
       - name: Create .env file
         run: echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" > .env
         
