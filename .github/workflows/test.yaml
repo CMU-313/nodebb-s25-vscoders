@@ -59,6 +59,9 @@ jobs:
               "port": 6379
             }
 
+      - name: Install test-only dependencies in container
+        run: docker compose exec -T nodebb npm install --no-save nyc mocha
+
       - name: Run Node tests in container
         run: docker compose exec -T nodebb npm test
 
