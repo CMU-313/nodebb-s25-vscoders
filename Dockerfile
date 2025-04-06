@@ -29,9 +29,11 @@ RUN groupadd --gid ${GID} ${USER} \
     && useradd --uid ${UID} --gid ${GID} --home-dir /usr/src/app/ --shell /bin/bash ${USER} \
     && chown -R ${USER}:${USER} /usr/src/app/
 
-USER ${USER}
+USER root
 
 RUN npm install -g nyc mocha
+
+USER ${USER}
 
 RUN npm install --omit=dev \
     && npm install ./nodebb-theme-harmony
