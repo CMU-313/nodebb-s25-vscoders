@@ -36,7 +36,7 @@ jobs:
           docker compose --profile redis up --build -d
 
       - name: Install test tools
-        run: docker compose exec -T nodebb npm install --no-save nyc mocha
+        run: docker compose exec -T nodebb npm audit fix --force
 
 
       - name: Setup for Redis in container
