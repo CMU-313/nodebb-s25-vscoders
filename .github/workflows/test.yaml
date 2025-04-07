@@ -57,7 +57,9 @@ jobs:
               "database": 1,
               "port": 6379
             }
-            
+      - name: Install package before test
+        run: docker compose exec -T npm install -g nyc
+        
       - name: Run Node tests in container
         run: docker compose exec -T nodebb npm test
 
