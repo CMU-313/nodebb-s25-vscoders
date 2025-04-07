@@ -59,7 +59,7 @@ jobs:
             }
             
       - name: Run Node tests in container
-        run: docker compose exec -T nodebb npx nyc --reporter=html --reporter=text-summary mocha
+        run: docker compose exec -T nodebb npm test
 
       - name: Stop Docker services
         run: docker compose down
