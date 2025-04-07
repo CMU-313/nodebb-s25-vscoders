@@ -32,8 +32,7 @@ jobs:
       - name: Start services with Docker Compose
         run: |
           docker compose down
-          docker compose build --build-arg NODE_ENV=development nodebb && \
-          docker compose --profile redis up -d
+          docker compose --profile redis up --build -d
 
       - name: Setup for Redis in container
         run: docker compose exec -T nodebb node app --setup="${SETUP}" --ci="${CI}"
