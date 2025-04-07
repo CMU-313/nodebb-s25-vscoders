@@ -29,6 +29,10 @@ RUN groupadd --gid ${GID} ${USER} \
     && useradd --uid ${UID} --gid ${GID} --home-dir /usr/src/app/ --shell /bin/bash ${USER} \
     && chown -R ${USER}:${USER} /usr/src/app/
 
+USER root
+
+RUN npm install -g nyc mocha
+
 USER ${USER}
 
 RUN npm install --omit=dev \
