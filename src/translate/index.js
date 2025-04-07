@@ -14,6 +14,7 @@ translatorApi.translate = async function (postData) {
 		return [data.is_english, data.translated_content];
 	} catch (error) {
 		console.log('Translation failed to fetch');
+
 		return [true, postData.content];
 	}
 };
