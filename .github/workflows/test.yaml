@@ -32,7 +32,8 @@ jobs:
       - name: Start services with Docker Compose
         run: |
           docker compose down
-          docker compose --profile redis up --build -d
+          docker compose build --build-arg NODE_ENV=development nodebb && \
+          docker compose --profile redis up -d
 
       - name: Setup for Redis in container
         run: docker compose exec -T nodebb node app --setup="${SETUP}" --ci="${CI}"
@@ -57,10 +58,6 @@ jobs:
               "database": 1,
               "port": 6379
             }
-
-      - name: Install test tools
-        run: |
-          docker compose exec -T nodebb npm install nyc mocha
             
       - name: Run Node tests in container
         run: docker compose exec -T nodebb npm test
