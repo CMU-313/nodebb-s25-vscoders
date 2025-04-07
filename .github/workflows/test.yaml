@@ -29,10 +29,17 @@ jobs:
       - name: Create .env file
         run: echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" > .env
         
+      - name: Install dependencies
+        run: npm install
+      
+      - name: Install nyc
+        run: npm install -g nyc
+
       - name: Start services with Docker Compose
         run: |
           docker compose down
-          docker compose --profile redis up --build -d
+          docker compose build --build-arg NODE_ENV=development nodebb && \
+          docker compose --profile redis up -d
 
       - name: Setup for Redis in container
         run: docker compose exec -T nodebb node app --setup="${SETUP}" --ci="${CI}"
@@ -131,8 +138,6 @@ jobs:
               npx artillery run artillery-config.yml
               ./nodebb stop
 
-
-            
   python-tests:
     runs-on: ubuntu-latest
     env:
