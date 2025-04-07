@@ -13,7 +13,7 @@ translatorApi.translate = async function (postData) {
 		console.log(data);
 		return [data.is_english, data.translated_content];
 	} catch (error) {
-		console.error('Translation fetch error:', error);
+		console.log('Translation failed to fetch');
 		return [true, postData.content];
 	}
 };
