@@ -29,20 +29,12 @@ RUN groupadd --gid ${GID} ${USER} \
     && useradd --uid ${UID} --gid ${GID} --home-dir /usr/src/app/ --shell /bin/bash ${USER} \
     && chown -R ${USER}:${USER} /usr/src/app/
 
-
 USER ${USER}
 
-ARG NODE_ENV=production
-ENV NODE_ENV=${NODE_ENV}
-
-RUN if [ "$NODE_ENV" = "development" ]; then \
-      echo "Installing all dependencies including dev..."; \
-      npm install; \
-    else \
-      echo "Installing production dependencies only..."; \
-      npm install --omit=dev; \
-    fi \
-  && npm install ./nodebb-theme-harmony
+RUN npm install --omit=dev \
+    && npm install ./nodebb-theme-harmony
+    # TODO: generate lockfiles for each package manager
+    ## pnpm import \
 
 FROM node:lts-slim AS final
 
