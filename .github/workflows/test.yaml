@@ -16,8 +16,17 @@ defaults:
 permissions:
   checks: write  # for coverallsapp/github-action to create new checks
   contents: read  # for actions/checkout to fetch code
-
 jobs:
+   python-tests:
+      runs-on: ubuntu-latest
+      env:
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    
+      steps:
+        - uses: actions/checkout@v4
+    
+        - name: Set up Python
+          uses: actions/setup-python@v4
    lint-Artillery-test:
       runs-on: ubuntu-latest
       env:
@@ -84,15 +93,5 @@ jobs:
               ./nodebb start
               npx artillery run artillery-config.yml
               ./nodebb stop
-          
-  python-tests:
-    runs-on: ubuntu-latest
-    env:
-      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
+        
       
