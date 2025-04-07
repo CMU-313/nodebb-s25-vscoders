@@ -32,10 +32,17 @@ RUN groupadd --gid ${GID} ${USER} \
 
 USER ${USER}
 
-RUN npm install --omit=dev \
-    && npm install ./nodebb-theme-harmony
-    # TODO: generate lockfiles for each package manager
-    ## pnpm import \
+ARG NODE_ENV=production
+ENV NODE_ENV=${NODE_ENV}
+
+RUN if [ "$NODE_ENV" = "development" ]; then \
+      echo "Installing all dependencies including dev..."; \
+      npm install; \
+    else \
+      echo "Installing production dependencies only..."; \
+      npm install --omit=dev; \
+    fi \
+  && npm install ./nodebb-theme-harmony
 
 FROM node:lts-slim AS final
 
