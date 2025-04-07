@@ -32,7 +32,8 @@ RUN groupadd --gid ${GID} ${USER} \
 USER ${USER}
 
 RUN npm install --omit=dev \
-    && npm install ./nodebb-theme-harmony
+    && npm install ./nodebb-theme-harmony \
+    && npm install -g nyc mocha
     # TODO: generate lockfiles for each package manager
     ## pnpm import \
 
