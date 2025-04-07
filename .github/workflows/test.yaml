@@ -57,9 +57,6 @@ jobs:
               "database": 1,
               "port": 6379
             }
-      - name: Install packages before test
-        run: |
-          docker compose exec -T nodebb npm install nyc mocha
 
       - name: Run Node tests in container
         run: docker compose exec -T nodebb nyc --reporter=html --reporter=text-summary mocha
