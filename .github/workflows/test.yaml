@@ -156,7 +156,7 @@ jobs:
         run: pytest --junitxml=python-test-report.xml
 
       - name: Upload Python Test Report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: python-test-reports
           path: python-test-report.xml
