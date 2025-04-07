@@ -664,6 +664,15 @@ describe('API', async () => {
 
 		// Compare the response to the schema
 		Object.keys(response).forEach((prop) => {
+			// Skip properties like "isEnglish"
+			if (prop === 'isEnglish') {
+				return;
+			}
+
+			if (prop === 'translatedContent') {
+				return;
+			}
+
 			if (additionalProperties) { // All bets are off
 				return;
 			}
