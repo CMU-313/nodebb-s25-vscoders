@@ -57,9 +57,10 @@ jobs:
               "database": 1,
               "port": 6379
             }
-      - name: Install package before test
-        run: docker compose exec -T npm install -g nyc
-        
+      - name: Install packages before test
+        run: |
+          docker compose exec -T nodebb npm install nyc mocha
+
       - name: Run Node tests in container
         run: docker compose exec -T nodebb nyc --reporter=html --reporter=text-summary mocha
 
@@ -132,9 +133,7 @@ jobs:
               ./nodebb start
               npx artillery run artillery-config.yml
               ./nodebb stop
-
-
-            
+          
   python-tests:
     runs-on: ubuntu-latest
     env:
