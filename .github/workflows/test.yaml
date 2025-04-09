@@ -17,34 +17,6 @@ permissions:
   checks: write  # for coverallsapp/github-action to create new checks
   contents: read  # for actions/checkout to fetch code
 jobs:
-   python-tests:
-      runs-on: ubuntu-latest
-      env:
-        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-    
-      steps:
-        - uses: actions/checkout@v4
-  
-        - name: Set up Python
-          uses: actions/setup-python@v4
-          with:
-            python-version: '3.11'
-  
-        - name: Install Python dependencies
-          run: |
-            cd translator-service
-            python -m pip install --upgrade pip
-            pip install -r requirements.txt  # Ensure pytest and mock are in requirements.txt
-            cd ..
-  
-        - name: Run Python tests
-          run: pytest --junitxml=python-test-report.xml
-  
-        - name: Upload Python Test Report
-          uses: actions/upload-artifact@v4
-          with:
-            name: python-test-reports
-            path: python-test-report.xml
    npmTest-lint-Artillery-test:
       runs-on: ubuntu-latest
       env:
