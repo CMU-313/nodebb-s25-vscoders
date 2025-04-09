@@ -17,17 +17,7 @@ permissions:
   checks: write  # for coverallsapp/github-action to create new checks
   contents: read  # for actions/checkout to fetch code
 jobs:
-   python-tests:
-      runs-on: ubuntu-latest
-      env:
-        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-    
-      steps:
-        - uses: actions/checkout@v4
-    
-        - name: Set up Python
-          uses: actions/setup-python@v4
-   lint-Artillery-test:
+   npmTest-lint-Artillery-test:
       runs-on: ubuntu-latest
       env:
         TEST_ENV: 'production'
@@ -58,6 +48,14 @@ jobs:
           uses: bahmutov/npm-install@v1
           with:
             useLockFile: false
+        
+        - name: Start flask server for translator
+          run: |
+            cd translator-service
+            python -m pip install --upgrade pip
+            pip install -r requirements.txt  # Ensure pytest and mock are in requirements.txt
+            flask run &
+            cd ..
   
         - name: Setup for Redis
           env:
@@ -86,6 +84,12 @@ jobs:
   
         - name: Run ESLint
           run: npm run lint
+        
+        - name: Node tests
+          run: npm test
+
+        - name: Extract coverage info
+          run: npm run coverage
   
         - name: Run Artillery Load Test
           run: |

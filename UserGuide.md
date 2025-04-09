@@ -34,4 +34,22 @@ We implemented this endorsement tag feature so that when an instructor (admin us
   
 ![Alt text](https://drive.google.com/uc?id=1AxVkQiSK8Z1FxcxJVTcS6qgjMVbtWidT)
 
-- (INCOMPLETE) Once the user fills out the topic title, content, and checks the post anonymously button, then the randomly generated username will be displayed in real-time. 
+- (INCOMPLETE) Once the user fills out the topic title, content, and checks the post anonymously button, then the randomly generated username will be displayed in real-time.
+
+## AI Translator Service Integration
+
+- We integrated an AI-powered translation feature that automatically translates posts written in foreign languages into English.
+- The translation is implemented and powered by OpenAI's GPT-4o-mini model.
+
+How it Works:
+
+- When a post is created or viewed, the system detects if it's in a non-English language.
+
+- If translation is required, a request is sent to the translation microservice.
+
+- The translated post is displayed below the original text.
+
+## Testing The New Features
+
+- There are unit tests for the endorsement tag feature in ```test/posts.js```.
+- There are unit tests for the translation feature in ```translator-service/test/unit/test_translator.py```
