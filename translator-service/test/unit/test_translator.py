@@ -101,7 +101,7 @@ def test_llm_gibberish_response(mock_completions):
 
 #====General Test===
 
-def QueryingForSuccess():
+def test_QueryingForSuccess():
     complete_eval_set = [
     # Non-English
     {"post": "Hier ist dein erstes Beispiel.", "expected_answer": (False, "Here is your first example.")},  # German
