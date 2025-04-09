@@ -27,6 +27,22 @@ jobs:
     
         - name: Set up Python
           uses: actions/setup-python@v4
+          with:
+            python-version: '3.11'
+  
+        - name: Install Python dependencies
+          run: |
+            python -m pip install --upgrade pip
+            pip install -r requirements.txt  # Ensure pytest and mock are in requirements.txt
+  
+        - name: Run Python tests
+          run: pytest --junitxml=python-test-report.xml
+  
+        - name: Upload Python Test Report
+          uses: actions/upload-artifact@v3
+          with:
+            name: python-test-reports
+            path: python-test-report.xml
    lint-Artillery-test:
       runs-on: ubuntu-latest
       env:
