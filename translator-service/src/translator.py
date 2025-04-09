@@ -2,7 +2,7 @@ import openai
 import os
 # Initialize the OpenAI client
 client = openai.OpenAI(
-    api_key= "str(os.getenv("OPENAI_API_KEY"))" # Replace with your OpenAI API key
+    api_key= str(os.getenv("OPENAI_API_KEY")) # Replace with your OpenAI API key
 )
 
 # Make a request to your Azure OpenAI model
