@@ -48,3 +48,8 @@ How it Works:
 - If translation is required, a request is sent to the translation microservice.
 
 - The translated post is displayed below the original text.
+
+## Testing The New Features
+
+- There are unit tests for the endorsement tag feature in ```test/posts.js```.
+- There are unit tests for the translation feature in ```translator-service/test/unit/test_translator.py```
